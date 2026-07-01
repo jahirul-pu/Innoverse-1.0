@@ -45,6 +45,8 @@ authRoutes.post("/send-otp", async (req: Request, res: Response) => {
       },
     });
 
+    console.log(`\n🔑 [OTP Service] Generated verification code ${code} for user ${phone}\n`);
+
     // In production: send SMS via provider
     // For now: return code in dev mode
     const response: any = {
