@@ -121,6 +121,14 @@ productRoutes.get("/", async (req: Request, res: Response) => {
   });
 });
 
+// ── List Brands ──────────────────────────────────────────────
+productRoutes.get("/brands", async (_req: Request, res: Response) => {
+  const brands = await prisma.brand.findMany({
+    orderBy: { name: "asc" },
+  });
+  return res.json({ brands });
+});
+
 // ── Search Suggestions ──────────────────────────────────────
 // GET /api/products/search/suggestions?q=term
 // NOTE: This must come BEFORE the /:slug route to avoid conflict

@@ -302,6 +302,12 @@ export default function ProductDetailPage() {
             >
               Buy Now
             </button>
+            <button className={styles["pdp__wishlist-btn"]} aria-label="Add to wishlist" id="wishlist-btn">
+              <HeartIcon />
+            </button>
+            <button className={styles["pdp__share-btn"]} aria-label="Share product" id="share-btn">
+              <ShareIcon />
+            </button>
           </div>
 
           {/* Delivery Estimate */}

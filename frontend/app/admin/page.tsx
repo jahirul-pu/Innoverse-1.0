@@ -1,54 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthContext";
+import { productApi } from "@/lib/api";
 import styles from "./Admin.module.css";
-
-// ─── Mock Data ──────────────────────────────────────────────
-const stats = {
-  revenue: { value: "৳2,45,680", change: "+12.5%", trend: "up" as const },
-  orders: { value: "342", change: "+8.2%", trend: "up" as const },
-  products: { value: "164", change: "+3", trend: "up" as const },
-  customers: { value: "1,247", change: "+15.1%", trend: "up" as const },
-};
-
-const recentOrders = [
-  { id: "INV-2026-001547", customer: "Rahim Ahmed", phone: "01712345678", items: 3, total: 5630, status: "shipped", date: "Jul 1, 2026" },
-  { id: "INV-2026-001546", customer: "Fatima Begum", phone: "01898765432", items: 1, total: 8990, status: "processing", date: "Jul 1, 2026" },
-  { id: "INV-2026-001545", customer: "Karim Hasan", phone: "01655443322", items: 2, total: 3780, status: "pending", date: "Jun 30, 2026" },
-  { id: "INV-2026-001544", customer: "Nadia Rahman", phone: "01511223344", items: 4, total: 12560, status: "delivered", date: "Jun 30, 2026" },
-  { id: "INV-2026-001543", customer: "Shakil Uddin", phone: "01944556677", items: 1, total: 2990, status: "cancelled", date: "Jun 29, 2026" },
-];
-
-const productList = [
-  { name: "Wireless ANC Earbuds Pro", sku: "SC-ANC-PRO-BK", brand: "SoundCore", price: 2990, stock: 45, status: "active" },
-  { name: "Noise Cancelling Headphones", sku: "SN-NC-WH1000", brand: "Sony", price: 8990, stock: 18, status: "active" },
-  { name: "Smart Watch Ultra", sku: "AZ-ULTRA-WCH", brand: "Amazfit", price: 6490, stock: 3, status: "low-stock" },
-  { name: "65W GaN Charger", sku: "UG-GAN65-3P", brand: "Ugreen", price: 1790, stock: 120, status: "active" },
-  { name: "Mechanical Keyboard RGB", sku: "KC-MECH-RGB", brand: "Keychron", price: 5490, stock: 0, status: "inactive" },
-  { name: "Action Camera 4K", sku: "GP-AC4K-HERO", brand: "GoPro", price: 22990, stock: 15, status: "active" },
-  { name: "Mini Bluetooth Speaker", sku: "JBL-MINI-BT", brand: "JBL", price: 2190, stock: 0, status: "inactive" },
-  { name: "Smart LED Strip 5M RGB", sku: "GV-LED-5M-RGB", brand: "Govee", price: 1290, stock: 80, status: "active" },
-  { name: "Fitness Band 7 Pro", sku: "AZ-BAND7-PRO", brand: "Amazfit", price: 3490, stock: 60, status: "active" },
-  { name: "USB-C Hub 7-in-1", sku: "AK-HUB7-USBC", brand: "Anker", price: 3290, stock: 4, status: "low-stock" },
-];
-
-const customerList = [
-  { name: "Rahim Ahmed", phone: "01712345678", email: "rahim@example.com", orders: 5, spent: 21400, joined: "Mar 2026" },
-  { name: "Fatima Begum", phone: "01898765432", email: "fatima@gmail.com", orders: 3, spent: 14890, joined: "Apr 2026" },
-  { name: "Karim Hasan", phone: "01655443322", email: "—", orders: 8, spent: 42300, joined: "Jan 2026" },
-  { name: "Nadia Rahman", phone: "01511223344", email: "nadia.r@yahoo.com", orders: 2, spent: 7980, joined: "May 2026" },
-  { name: "Shakil Uddin", phone: "01944556677", email: "shakil@example.com", orders: 12, spent: 89100, joined: "Dec 2025" },
-];
-
-const chartBars = [35, 58, 42, 70, 55, 80, 65, 90, 75, 85, 60, 95];
 
 type AdminView = "dashboard" | "products" | "orders" | "customers";
 
 const navItems = [
   { icon: "📊", label: "Dashboard", key: "dashboard" as const },
-  { icon: "📦", label: "Products", key: "products" as const, count: 164 },
-  { icon: "🛒", label: "Orders", key: "orders" as const, count: 12 },
+  { icon: "📦", label: "Products", key: "products" as const },
+  { icon: "🛒", label: "Orders", key: "orders" as const },
   { icon: "👥", label: "Customers", key: "customers" as const },
 ];
 
@@ -63,300 +27,252 @@ function formatBDT(amount: number) {
   return `৳${amount.toLocaleString("en-BD")}`;
 }
 
-// ─── Dashboard View ─────────────────────────────────────────
-function DashboardView() {
-  return (
-    <>
-      {/* Stats Grid */}
-      <div className={styles["stats-grid"]}>
-        <div className={styles["stat-card"]}>
-          <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--revenue"]}`}>💰</div>
-          <div className={styles["stat-card__body"]}>
-            <div className={styles["stat-card__label"]}>Total Revenue</div>
-            <div className={styles["stat-card__value"]}>{stats.revenue.value}</div>
-            <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
-              ↑ {stats.revenue.change} this month
-            </div>
-          </div>
-        </div>
-        <div className={styles["stat-card"]}>
-          <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--orders"]}`}>📋</div>
-          <div className={styles["stat-card__body"]}>
-            <div className={styles["stat-card__label"]}>Total Orders</div>
-            <div className={styles["stat-card__value"]}>{stats.orders.value}</div>
-            <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
-              ↑ {stats.orders.change} this month
-            </div>
-          </div>
-        </div>
-        <div className={styles["stat-card"]}>
-          <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--products"]}`}>📦</div>
-          <div className={styles["stat-card__body"]}>
-            <div className={styles["stat-card__label"]}>Active Products</div>
-            <div className={styles["stat-card__value"]}>{stats.products.value}</div>
-            <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
-              ↑ {stats.products.change} new this week
-            </div>
-          </div>
-        </div>
-        <div className={styles["stat-card"]}>
-          <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--customers"]}`}>👥</div>
-          <div className={styles["stat-card__body"]}>
-            <div className={styles["stat-card__label"]}>Customers</div>
-            <div className={styles["stat-card__value"]}>{stats.customers.value}</div>
-            <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
-              ↑ {stats.customers.change} this month
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className={styles["chart-grid"]}>
-        <div className={styles["chart-card"]}>
-          <div className={styles["chart-card__title"]}>Revenue Overview (Last 12 Months)</div>
-          <div className={styles["chart-placeholder"]}>
-            {chartBars.map((h, i) => (
-              <div key={i} className={styles["chart-bar"]} style={{ height: `${h}%` }} />
-            ))}
-          </div>
-        </div>
-        <div className={styles["chart-card"]}>
-          <div className={styles["chart-card__title"]}>Sales by Category</div>
-          <div className={styles["chart-donut-placeholder"]}>
-            <div className={styles["chart-donut"]} />
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-3)", marginTop: "var(--space-3)", justifyContent: "center" }}>
-            {[
-              { label: "Audio", color: "var(--color-signal-amber)" },
-              { label: "Smart Home", color: "var(--color-trace-blue)" },
-              { label: "Wearables", color: "var(--color-circuit-green)" },
-              { label: "Accessories", color: "rgba(155,89,182,0.7)" },
-            ].map((cat) => (
-              <span key={cat.label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: cat.color }} />
-                {cat.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Orders */}
-      <div className={styles["admin-panel"]}>
-        <div className={styles["admin-panel__header"]}>
-          <div className={styles["admin-panel__title"]}>Recent Orders</div>
-          <button className="btn btn--secondary btn--sm">View All →</button>
-        </div>
-        <div style={{ overflowX: "auto" }}>
-          <table className={styles["data-table"]}>
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentOrders.map((order) => (
-                <tr key={order.id}>
-                  <td className={styles["data-table__mono"]}><span className={styles["data-table__link"]}>{order.id}</span></td>
-                  <td>
-                    <div style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{order.customer}</div>
-                    <div style={{ fontFamily: "var(--font-data)", fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>{order.phone}</div>
-                  </td>
-                  <td>{order.items} item{order.items !== 1 ? "s" : ""}</td>
-                  <td className={styles["data-table__mono"]} style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{formatBDT(order.total)}</td>
-                  <td><span className={`${styles["status-dot"]} ${styles[`status-dot--${order.status}`]}`}>{order.status}</span></td>
-                  <td className={styles["data-table__mono"]}>{order.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ─── Products View ──────────────────────────────────────────
-function ProductsView() {
-  return (
-    <div className={styles["admin-panel"]}>
-      <div className={styles["admin-panel__header"]}>
-        <div className={styles["admin-panel__title"]}>All Products ({productList.length})</div>
-        <div className={styles["admin-panel__actions"]}>
-          <button className="btn btn--secondary btn--sm">Export</button>
-          <button className="btn btn--primary btn--sm">+ Add Product</button>
-        </div>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <table className={styles["data-table"]}>
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>SKU</th>
-              <th>Brand</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productList.map((product) => (
-              <tr key={product.sku}>
-                <td>
-                  <div className={styles["data-table__product"]}>
-                    <div className={styles["data-table__product-img"]}>📦</div>
-                    <div className={styles["data-table__product-info"]}>
-                      <div className={styles["data-table__product-name"]}>{product.name}</div>
-                    </div>
-                  </div>
-                </td>
-                <td><span className={styles["data-table__mono"]} style={{ fontSize: "var(--text-xs)" }}>{product.sku}</span></td>
-                <td>{product.brand}</td>
-                <td className={styles["data-table__mono"]} style={{ fontWeight: 600 }}>{formatBDT(product.price)}</td>
-                <td className={styles["data-table__mono"]}>{product.stock}</td>
-                <td><span className={`${styles["status-dot"]} ${styles[`status-dot--${product.status}`]}`}>{product.status === "low-stock" ? "Low Stock" : product.status}</span></td>
-                <td>
-                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                    <button className="btn btn--secondary btn--sm">Edit</button>
-                    <button className="btn btn--secondary btn--sm" style={{ color: "var(--color-status-cancelled)" }}>Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ─── Orders View ────────────────────────────────────────────
-function OrdersView() {
-  return (
-    <div className={styles["admin-panel"]}>
-      <div className={styles["admin-panel__header"]}>
-        <div className={styles["admin-panel__title"]}>All Orders</div>
-        <div className={styles["admin-panel__actions"]}>
-          <select className="btn btn--secondary btn--sm" style={{ fontFamily: "var(--font-body)", cursor: "pointer" }}>
-            <option>All Statuses</option>
-            <option>Pending</option>
-            <option>Processing</option>
-            <option>Shipped</option>
-            <option>Delivered</option>
-            <option>Cancelled</option>
-          </select>
-          <button className="btn btn--secondary btn--sm">Export</button>
-        </div>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <table className={styles["data-table"]}>
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Payment</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recentOrders.map((order) => (
-              <tr key={order.id}>
-                <td className={styles["data-table__mono"]}><span className={styles["data-table__link"]}>{order.id}</span></td>
-                <td>
-                  <div style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{order.customer}</div>
-                  <div style={{ fontFamily: "var(--font-data)", fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>{order.phone}</div>
-                </td>
-                <td>{order.items}</td>
-                <td className={styles["data-table__mono"]} style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{formatBDT(order.total)}</td>
-                <td><span style={{ fontFamily: "var(--font-data)", fontSize: "var(--text-xs)" }}>COD</span></td>
-                <td><span className={`${styles["status-dot"]} ${styles[`status-dot--${order.status}`]}`}>{order.status}</span></td>
-                <td className={styles["data-table__mono"]}>{order.date}</td>
-                <td>
-                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                    <button className="btn btn--secondary btn--sm">View</button>
-                    <button className="btn btn--secondary btn--sm">Update</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ─── Customers View ─────────────────────────────────────────
-function CustomersView() {
-  return (
-    <div className={styles["admin-panel"]}>
-      <div className={styles["admin-panel__header"]}>
-        <div className={styles["admin-panel__title"]}>All Customers ({customerList.length})</div>
-        <div className={styles["admin-panel__actions"]}>
-          <button className="btn btn--secondary btn--sm">Export</button>
-        </div>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <table className={styles["data-table"]}>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th>Orders</th>
-              <th>Total Spent</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customerList.map((customer) => (
-              <tr key={customer.phone}>
-                <td>
-                  <div className={styles["data-table__product"]}>
-                    <div className={styles["data-table__product-img"]} style={{
-                      background: "linear-gradient(135deg, var(--color-signal-amber), #FF9A5C)",
-                      color: "#fff",
-                      fontWeight: 700,
-                      fontSize: "var(--text-xs)",
-                      fontFamily: "var(--font-display)",
-                    }}>
-                      {customer.name.split(" ").map(n => n[0]).join("")}
-                    </div>
-                    <div style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{customer.name}</div>
-                  </div>
-                </td>
-                <td className={styles["data-table__mono"]}>{customer.phone}</td>
-                <td style={{ fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>{customer.email}</td>
-                <td className={styles["data-table__mono"]}>{customer.orders}</td>
-                <td className={styles["data-table__mono"]} style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{formatBDT(customer.spent)}</td>
-                <td className={styles["data-table__mono"]}>{customer.joined}</td>
-                <td>
-                  <button className="btn btn--secondary btn--sm">View</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Admin Page ────────────────────────────────────────
 export default function AdminDashboard() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
   const [activeView, setActiveView] = useState<AdminView>("dashboard");
+
+  // Live Data States
+  const [stats, setStats] = useState<any>({ totalProducts: 0, totalOrders: 0, totalCustomers: 0, totalRevenue: 0 });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // CRUD Modals state
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+
+  // Form Field states
+  const [prodName, setProdName] = useState("");
+  const [prodSku, setProdSku] = useState("");
+  const [prodPrice, setProdPrice] = useState("");
+  const [prodComparePrice, setProdComparePrice] = useState("");
+  const [prodCostPrice, setProdCostPrice] = useState("");
+  const [prodStock, setProdStock] = useState("");
+  const [prodCategoryId, setProdCategoryId] = useState("");
+  const [prodBrandId, setProdBrandId] = useState("");
+  const [prodShortDesc, setProdShortDesc] = useState("");
+  const [prodDesc, setProdDesc] = useState("");
+  const [prodIsFeatured, setProdIsFeatured] = useState(false);
+  const [prodIsNewArrival, setProdIsNewArrival] = useState(false);
+
+  // Check auth privilege
+  const isAdmin = user && (user.role === "ADMIN" || user.role === "SUPER_ADMIN");
+
+  // Fetch admin dashboard details
+  async function loadAdminData() {
+    if (!isAdmin) return;
+    try {
+      setLoading(true);
+      setError(null);
+
+      // 1. Load dashboard stats
+      const statsRes = await fetch("http://localhost:4000/api/admin/stats", {
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      }).then(r => r.json());
+
+      if (statsRes && statsRes.stats) {
+        setStats(statsRes.stats);
+        setRecentOrders(statsRes.recentOrders || []);
+        setLowStockProducts(statsRes.lowStockProducts || []);
+      }
+
+      // 2. Load all categories & brands
+      const catRes = await fetch("http://localhost:4000/api/categories").then(r => r.json());
+      if (catRes && catRes.categories) setCategories(catRes.categories);
+
+      const brandRes = await fetch("http://localhost:4000/api/products/brands").then(r => r.json());
+      if (brandRes && brandRes.brands) setBrands(brandRes.brands);
+
+      // 3. Load live products list
+      const prodRes = await productApi.list({ limit: 100 });
+      if (prodRes && prodRes.products) setProducts(prodRes.products);
+
+      // 4. Load live orders list
+      const ordersRes = await fetch("http://localhost:4000/api/admin/orders", {
+        credentials: "include"
+      }).then(r => r.json());
+      if (ordersRes && ordersRes.orders) setOrders(ordersRes.orders);
+
+      // 5. Load customers list (from users or custom stats)
+      const customersRes = await fetch("http://localhost:4000/api/admin/orders", { credentials: "include" }).then(r => r.json());
+      if (customersRes && customersRes.orders) {
+        // Extract unique customers from orders as simple stub lists
+        const customerMap: Record<string, any> = {};
+        customersRes.orders.forEach((o: any) => {
+          if (o.user && o.user.phone) {
+            customerMap[o.user.phone] = {
+              name: o.user.name || "Customer",
+              phone: o.user.phone,
+              email: o.user.email || "—",
+              orders: (customerMap[o.user.phone]?.orders || 0) + 1,
+              spent: (customerMap[o.user.phone]?.spent || 0) + Number(o.total),
+              joined: new Date(o.user.createdAt || Date.now()).toLocaleDateString()
+            };
+          }
+        });
+        setCustomers(Object.values(customerMap));
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to fetch administrative data. Ensure the database & backend are running.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadAdminData();
+  }, [user]);
+
+  // Open modal for Create
+  function openAddModal() {
+    setEditingProduct(null);
+    setProdName("");
+    setProdSku("");
+    setProdPrice("");
+    setProdComparePrice("");
+    setProdCostPrice("");
+    setProdStock("");
+    setProdCategoryId(categories[0]?.id || "");
+    setProdBrandId(brands[0]?.id || "");
+    setProdShortDesc("");
+    setProdDesc("");
+    setProdIsFeatured(false);
+    setProdIsNewArrival(false);
+    setProductModalOpen(true);
+  }
+
+  // Open modal for Edit
+  function openEditModal(prod: any) {
+    setEditingProduct(prod);
+    setProdName(prod.name || "");
+    setProdSku(prod.sku || "");
+    setProdPrice(prod.price?.toString() || "");
+    setProdComparePrice(prod.compareAtPrice?.toString() || "");
+    setProdCostPrice(prod.costPrice?.toString() || "");
+    setProdStock(prod.stock?.toString() || "");
+    setProdCategoryId(prod.category?.id || prod.categoryId || "");
+    setProdBrandId(prod.brand?.id || prod.brandId || "");
+    setProdShortDesc(prod.shortDescription || "");
+    setProdDesc(prod.description || "");
+    setProdIsFeatured(prod.isFeatured || false);
+    setProdIsNewArrival(prod.isNewArrival || false);
+    setProductModalOpen(true);
+  }
+
+  // Handle Save (Create / Update)
+  async function handleProductSave(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const payload = {
+        name: prodName,
+        sku: prodSku,
+        price: Number(prodPrice),
+        compareAtPrice: prodComparePrice ? Number(prodComparePrice) : undefined,
+        costPrice: prodCostPrice ? Number(prodCostPrice) : undefined,
+        stock: Number(prodStock),
+        categoryId: prodCategoryId || categories[0]?.id,
+        brandId: prodBrandId || brands[0]?.id,
+        shortDescription: prodShortDesc,
+        description: prodDesc,
+        isFeatured: prodIsFeatured,
+        isNewArrival: prodIsNewArrival
+      };
+
+      if (editingProduct) {
+        // Edit flow
+        const res = await fetch(`http://localhost:4000/api/admin/products/${editingProduct.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+
+        if (res.error) throw new Error(res.error);
+        alert("Product updated successfully!");
+      } else {
+        // Create flow
+        const res = await fetch("http://localhost:4000/api/admin/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+
+        if (res.error) throw new Error(res.error);
+        alert("Product created successfully!");
+      }
+
+      setProductModalOpen(false);
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error saving product: ${err.message || err}`);
+    }
+  }
+
+  // Handle Product Deactivate (Delete)
+  async function handleProductDelete(id: string) {
+    if (!confirm("Are you sure you want to deactivate this product? It will no longer show on the storefront.")) return;
+    try {
+      const res = await fetch(`http://localhost:4000/api/admin/products/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      }).then(r => r.json());
+
+      if (res.error) throw new Error(res.error);
+      alert("Product deactivated successfully!");
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error deleting product: ${err.message || err}`);
+    }
+  }
+
+  // Handle Order Status Update
+  async function handleOrderStatusUpdate(id: string, newStatus: string) {
+    try {
+      const res = await fetch(`http://localhost:4000/api/admin/orders/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+        credentials: "include"
+      }).then(r => r.json());
+
+      if (res.error) throw new Error(res.error);
+      alert("Order status updated successfully!");
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error updating order status: ${err.message || err}`);
+    }
+  }
+
+  if (authLoading) {
+    return <div style={{ display: "flex", justifyContent: "center", padding: 100, fontFamily: "var(--font-data)" }}>Verifying authentication...</div>;
+  }
+
+  // If not logged in as Admin, show access warning layout
+  if (!isAdmin) {
+    return (
+      <div style={{ maxWidth: 500, margin: "100px auto", padding: "var(--space-6)", backgroundColor: "var(--color-surface)", border: "var(--border-hairline)", borderRadius: "var(--border-radius-md)", textAlign: "center" }}>
+        <h2 style={{ marginBottom: "var(--space-4)" }}>⛔ Access Denied</h2>
+        <p style={{ color: "var(--color-text-secondary)", marginBottom: "var(--space-6)" }}>
+          You must be logged in as an Administrator to view this panel.
+        </p>
+        <Link href="/auth" className="btn btn--primary">
+          Login with Admin Account
+        </Link>
+      </div>
+    );
+  }
 
   const viewTitles: Record<AdminView, string> = {
     dashboard: "Dashboard",
@@ -389,26 +305,25 @@ export default function AdminDashboard() {
               >
                 <span className={styles["admin-nav__icon"]}>{item.icon}</span>
                 {item.label}
-                {item.count && <span className={styles["admin-nav__count"]}>{item.count}</span>}
               </button>
             ))}
           </div>
 
-          {/* Catalog */}
+          {/* Catalog Utility Stubs */}
           <div className={styles["admin-nav__group"]}>
             <div className={styles["admin-nav__group-label"]}>Catalog</div>
             {navUtility.map((item) => (
-              <button key={item.label} className={styles["admin-nav__link"]}>
+              <button key={item.label} className={styles["admin-nav__link"]} onClick={() => alert(`${item.label} management is currently stubbed.`)}>
                 <span className={styles["admin-nav__icon"]}>{item.icon}</span>
                 {item.label}
               </button>
             ))}
           </div>
 
-          {/* Settings */}
+          {/* System */}
           <div className={styles["admin-nav__group"]}>
             <div className={styles["admin-nav__group-label"]}>System</div>
-            <button className={styles["admin-nav__link"]}>
+            <button className={styles["admin-nav__link"]} onClick={() => alert("Settings is currently stubbed.")}>
               <span className={styles["admin-nav__icon"]}>⚙️</span>
               Settings
             </button>
@@ -421,10 +336,12 @@ export default function AdminDashboard() {
 
         <div className={styles["admin-sidebar__footer"]}>
           <div className={styles["admin-sidebar__user"]}>
-            <div className={styles["admin-sidebar__user-avatar"]}>AD</div>
+            <div className={styles["admin-sidebar__user-avatar"]}>
+              {user.name ? user.name.substring(0, 2).toUpperCase() : "AD"}
+            </div>
             <div className={styles["admin-sidebar__user-info"]}>
-              <div className={styles["admin-sidebar__user-name"]}>Admin</div>
-              <div className={styles["admin-sidebar__user-role"]}>Super Admin</div>
+              <div className={styles["admin-sidebar__user-name"]}>{user.name || "Admin"}</div>
+              <div className={styles["admin-sidebar__user-role"]}>{user.role}</div>
             </div>
           </div>
         </div>
@@ -438,23 +355,365 @@ export default function AdminDashboard() {
           <div className={styles["admin-topbar__actions"]}>
             <div className={styles["admin-topbar__search"]}>
               🔍
-              <input type="text" placeholder="Search..." id="admin-search" />
+              <input type="text" placeholder="Search (stub)..." id="admin-search" />
             </div>
-            <button className={styles["admin-topbar__icon-btn"]} aria-label="Notifications">
+            <button className={styles["admin-topbar__icon-btn"]} aria-label="Notifications" onClick={() => alert("No notifications.")}>
               🔔
-              <span className={styles["admin-topbar__notif-dot"]} />
+              {lowStockProducts.length > 0 && <span className={styles["admin-topbar__notif-dot"]} />}
             </button>
           </div>
         </div>
 
-        {/* Content */}
+        {/* Dynamic Admin Content Views */}
         <div className={styles["admin-content"]}>
-          {activeView === "dashboard" && <DashboardView />}
-          {activeView === "products" && <ProductsView />}
-          {activeView === "orders" && <OrdersView />}
-          {activeView === "customers" && <CustomersView />}
+          {error && <div style={{ color: "var(--color-status-cancelled)", padding: "var(--space-4)", backgroundColor: "rgba(220,53,69,0.05)", border: "1px solid var(--color-status-cancelled)", borderRadius: "var(--border-radius-md)", marginBottom: "var(--space-4)" }}>{error}</div>}
+
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "100px 0", color: "var(--color-text-tertiary)", fontFamily: "var(--font-data)" }}>Loading panel data...</div>
+          ) : (
+            <>
+              {/* Dashboard View */}
+              {activeView === "dashboard" && (
+                <>
+                  {/* Stats Grid */}
+                  <div className={styles["stats-grid"]}>
+                    <div className={styles["stat-card"]}>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--revenue"]}`}>💰</div>
+                      <div className={styles["stat-card__body"]}>
+                        <div className={styles["stat-card__label"]}>Total Revenue</div>
+                        <div className={styles["stat-card__value"]}>{formatBDT(stats.totalRevenue)}</div>
+                        <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
+                          ↑ Live Sum
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles["stat-card"]}>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--orders"]}`}>📋</div>
+                      <div className={styles["stat-card__body"]}>
+                        <div className={styles["stat-card__label"]}>Total Orders</div>
+                        <div className={styles["stat-card__value"]}>{stats.totalOrders}</div>
+                        <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
+                          ↑ Active counter
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles["stat-card"]}>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--products"]}`}>📦</div>
+                      <div className={styles["stat-card__body"]}>
+                        <div className={styles["stat-card__label"]}>Active Products</div>
+                        <div className={styles["stat-card__value"]}>{stats.totalProducts}</div>
+                        <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
+                          ↑ In Catalog
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles["stat-card"]}>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--customers"]}`}>👥</div>
+                      <div className={styles["stat-card__body"]}>
+                        <div className={styles["stat-card__label"]}>Customers</div>
+                        <div className={styles["stat-card__value"]}>{stats.totalCustomers}</div>
+                        <div className={`${styles["stat-card__change"]} ${styles["stat-card__change--up"]}`}>
+                          ↑ Customer base
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Low Stock Alerts */}
+                  {lowStockProducts.length > 0 && (
+                    <div className={styles["admin-panel"]} style={{ borderColor: "var(--color-signal-amber)" }}>
+                      <div className={styles["admin-panel__header"]} style={{ borderBottomColor: "var(--color-signal-amber)" }}>
+                        <div className={styles["admin-panel__title"]} style={{ color: "var(--color-signal-amber)" }}>⚠️ Low Stock Warnings</div>
+                      </div>
+                      <div style={{ padding: "var(--space-4)" }}>
+                        <ul style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", listStyle: "none" }}>
+                          {lowStockProducts.map((p: any) => (
+                            <li key={p.sku} style={{ fontSize: "var(--text-sm)", display: "flex", justifyContent: "space-between" }}>
+                              <span>{p.name} (SKU: {p.sku})</span>
+                              <span style={{ fontWeight: 600, color: "var(--color-status-cancelled)" }}>Only {p.stock} units left!</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recent Orders */}
+                  <div className={styles["admin-panel"]}>
+                    <div className={styles["admin-panel__header"]}>
+                      <div className={styles["admin-panel__title"]}>Recent Orders</div>
+                      <button className="btn btn--secondary btn--sm" onClick={() => setActiveView("orders")}>View All Orders →</button>
+                    </div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table className={styles["data-table"]}>
+                        <thead>
+                          <tr>
+                            <th>Order No</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recentOrders.length === 0 ? (
+                            <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>No orders placed yet.</td></tr>
+                          ) : (
+                            recentOrders.map((order: any) => (
+                              <tr key={order.orderNumber}>
+                                <td className={styles["data-table__mono"]}><span className={styles["data-table__link"]}>{order.orderNumber}</span></td>
+                                <td>
+                                  <div style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{order.user?.name || "Customer"}</div>
+                                  <div style={{ fontFamily: "var(--font-data)", fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>{order.user?.phone}</div>
+                                </td>
+                                <td className={styles["data-table__mono"]} style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{formatBDT(Number(order.total))}</td>
+                                <td><span className={`${styles["status-dot"]} ${styles[`status-dot--${order.status.toLowerCase()}`]}`}>{order.status}</span></td>
+                                <td className={styles["data-table__mono"]}>{new Date(order.createdAt).toLocaleDateString()}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Products View */}
+              {activeView === "products" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>All Products ({products.length})</div>
+                    <div className={styles["admin-panel__actions"]}>
+                      <button className="btn btn--primary btn--sm" onClick={openAddModal}>+ Add Product</button>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>SKU</th>
+                          <th>Brand</th>
+                          <th>Price</th>
+                          <th>Stock</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {products.length === 0 ? (
+                          <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-4)" }}>No products in database.</td></tr>
+                        ) : (
+                          products.map((product: any) => (
+                            <tr key={product.id}>
+                              <td>
+                                <div className={styles["data-table__product"]}>
+                                  <div className={styles["data-table__product-img"]}>📦</div>
+                                  <div className={styles["data-table__product-info"]}>
+                                    <div className={styles["data-table__product-name"]}>{product.name}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td><span className={styles["data-table__mono"]} style={{ fontSize: "var(--text-xs)" }}>{product.sku}</span></td>
+                              <td>{product.brand?.name}</td>
+                              <td className={styles["data-table__mono"]} style={{ fontWeight: 600 }}>{formatBDT(Number(product.price))}</td>
+                              <td className={styles["data-table__mono"]}>{product.stock}</td>
+                              <td>
+                                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                  <button className="btn btn--secondary btn--sm" onClick={() => openEditModal(product)}>Edit</button>
+                                  <button className="btn btn--secondary btn--sm" style={{ color: "var(--color-status-cancelled)" }} onClick={() => handleProductDelete(product.id)}>Deactivate</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Orders View */}
+              {activeView === "orders" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>All Orders ({orders.length})</div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Order No</th>
+                          <th>Customer</th>
+                          <th>Total</th>
+                          <th>Method</th>
+                          <th>Status</th>
+                          <th>Update Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.length === 0 ? (
+                          <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-4)" }}>No orders placed.</td></tr>
+                        ) : (
+                          orders.map((order: any) => (
+                            <tr key={order.id}>
+                              <td className={styles["data-table__mono"]}><span className={styles["data-table__link"]}>{order.orderNumber}</span></td>
+                              <td>
+                                <div style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{order.user?.name || "Customer"}</div>
+                                <div style={{ fontFamily: "var(--font-data)", fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>{order.user?.phone}</div>
+                              </td>
+                              <td className={styles["data-table__mono"]} style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{formatBDT(Number(order.total))}</td>
+                              <td><span style={{ fontFamily: "var(--font-data)", fontSize: "var(--text-xs)" }}>{order.paymentMethod}</span></td>
+                              <td><span className={`${styles["status-dot"]} ${styles[`status-dot--${order.status.toLowerCase()}`]}`}>{order.status}</span></td>
+                              <td>
+                                <select
+                                  value={order.status}
+                                  className={styles["data-table__mono"]}
+                                  style={{ padding: "var(--space-1) var(--space-2)", fontSize: "var(--text-xs)", cursor: "pointer", border: "var(--border-hairline)", borderRadius: "var(--border-radius-sm)", backgroundColor: "var(--color-surface)" }}
+                                  onChange={(e) => handleOrderStatusUpdate(order.id, e.target.value)}
+                                >
+                                  {["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"].map((st) => (
+                                    <option key={st} value={st}>{st}</option>
+                                  ))}
+                                </select>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Customers View */}
+              {activeView === "customers" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>All Customers ({customers.length})</div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Customer</th>
+                          <th>Phone</th>
+                          <th>Email</th>
+                          <th>Orders Placed</th>
+                          <th>Total Spent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customers.length === 0 ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>No registered customers with order history.</td></tr>
+                        ) : (
+                          customers.map((cust: any) => (
+                            <tr key={cust.phone}>
+                              <td>
+                                <div className={styles["data-table__product"]}>
+                                  <div className={styles["data-table__product-img"]} style={{ background: "linear-gradient(135deg, var(--color-signal-amber), #FF9A5C)", color: "#fff", fontWeight: 700, fontSize: "var(--text-xs)" }}>
+                                    {cust.name.split(" ").map((n: string) => n[0]).join("")}
+                                  </div>
+                                  <div style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{cust.name}</div>
+                                </div>
+                              </td>
+                              <td className={styles["data-table__mono"]}>{cust.phone}</td>
+                              <td style={{ fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>{cust.email}</td>
+                              <td className={styles["data-table__mono"]}>{cust.orders}</td>
+                              <td className={styles["data-table__mono"]} style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{formatBDT(cust.spent)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
+
+      {/* ── Add / Edit Product Modal ── */}
+      {productModalOpen && (
+        <>
+          <div className="overlay overlay--visible" onClick={() => setProductModalOpen(false)} style={{ zIndex: 999 }} />
+          <div className={styles.modal}>
+            <div className={styles.modal__header}>
+              <h3 className={styles.modal__title}>
+                {editingProduct ? "Edit Product Settings" : "Create New Product Catalog"}
+              </h3>
+              <button className={styles.modal__close} onClick={() => setProductModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={handleProductSave}>
+              <div className={styles.modal__body}>
+                <div className={styles["form-grid"]}>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Product Name</label>
+                    <input type="text" className="input" required value={prodName} onChange={(e) => setProdName(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">SKU (Stock Keeping Unit)</label>
+                    <input type="text" className="input" required value={prodSku} onChange={(e) => setProdSku(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Stock Quantity</label>
+                    <input type="number" className="input" required min="0" value={prodStock} onChange={(e) => setProdStock(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Retail Price (৳)</label>
+                    <input type="number" className="input" required min="1" value={prodPrice} onChange={(e) => setProdPrice(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Compare Price (৳, optional)</label>
+                    <input type="number" className="input" min="0" value={prodComparePrice} onChange={(e) => setProdComparePrice(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Cost Price (৳, optional)</label>
+                    <input type="number" className="input" min="0" value={prodCostPrice} onChange={(e) => setProdCostPrice(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Category</label>
+                    <select className="select" value={prodCategoryId} onChange={(e) => setProdCategoryId(e.target.value)}>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Brand Partner</label>
+                    <select className="select" value={prodBrandId} onChange={(e) => setProdBrandId(e.target.value)}>
+                      {brands.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Short Description</label>
+                    <input type="text" className="input" value={prodShortDesc} onChange={(e) => setProdShortDesc(e.target.value)} />
+                  </div>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Full HTML Description</label>
+                    <textarea className="input" style={{ height: 80, resize: "vertical" }} value={prodDesc} onChange={(e) => setProdDesc(e.target.value)} />
+                  </div>
+                  <div className={styles["form-checkbox-group"]}>
+                    <input type="checkbox" id="featured" className={styles["form-checkbox"]} checked={prodIsFeatured} onChange={(e) => setProdIsFeatured(e.target.checked)} />
+                    <label htmlFor="featured">Featured Product</label>
+                  </div>
+                  <div className={styles["form-checkbox-group"]}>
+                    <input type="checkbox" id="new-arrival" className={styles["form-checkbox"]} checked={prodIsNewArrival} onChange={(e) => setProdIsNewArrival(e.target.checked)} />
+                    <label htmlFor="new-arrival">New Arrival Tag</label>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modal__footer}>
+                <button type="button" className="btn btn--secondary" onClick={() => setProductModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn--primary">Save Product</button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
     </div>
   );
 }
