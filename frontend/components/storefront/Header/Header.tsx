@@ -261,6 +261,9 @@ export default function Header() {
             <Link href="/" className={`${styles["header__nav-link"]} ${styles["header__nav-link--active"]}`}>
               Home
             </Link>
+            <Link href="/products" className={styles["header__nav-link"]}>
+              All Products
+            </Link>
             {categories.map((cat) => (
               <Link key={cat.name} href={cat.href} className={styles["header__nav-link"]}>
                 {cat.name}
@@ -331,6 +334,9 @@ export default function Header() {
         <div className={styles["mobile-nav__links"]}>
           <Link href="/" className={styles["mobile-nav__link"]} onClick={() => setMobileNavOpen(false)}>
             Home
+          </Link>
+          <Link href="/products" className={styles["mobile-nav__link"]} onClick={() => setMobileNavOpen(false)}>
+            All Products
           </Link>
           {categories.map((cat) => (
             <Link
