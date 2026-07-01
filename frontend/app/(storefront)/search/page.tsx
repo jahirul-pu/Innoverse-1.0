@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -84,9 +84,14 @@ function ProductCard({ product }: { product: Product }) {
 
 function SearchContent() {
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || "";
-  const [query, setQuery] = useState(initialQuery);
-  const [searchInput, setSearchInput] = useState(initialQuery);
+  const urlQuery = searchParams.get("q") || "";
+  const [query, setQuery] = useState(urlQuery);
+  const [searchInput, setSearchInput] = useState(urlQuery);
+
+  useEffect(() => {
+    setQuery(urlQuery);
+    setSearchInput(urlQuery);
+  }, [urlQuery]);
 
   const results = useMemo(() => {
     if (!query) return [];

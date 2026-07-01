@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import styles from "./Header.module.css";
 
@@ -114,10 +115,12 @@ const categories = [
 ];
 
 export default function Header() {
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const [cartCount] = useState(0); // Will connect to cart state later
   const headerRef = useRef<HTMLElement>(null);
 
@@ -178,7 +181,15 @@ export default function Header() {
           </Link>
 
           {/* Search Bar — hidden on mobile, shown tablet+ */}
-          <div className={styles.header__search}>
+          <form
+            className={styles.header__search}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) {
+                router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+              }
+            }}
+          >
             <span className={styles["header__search-icon"]}>
               <SearchIcon />
             </span>
@@ -191,7 +202,7 @@ export default function Header() {
               id="header-search"
               aria-label="Search products"
             />
-          </div>
+          </form>
 
           {/* Action Buttons */}
           <div className={styles.header__actions}>
@@ -292,14 +303,25 @@ export default function Header() {
           </button>
         </div>
 
-        <div className={styles["mobile-nav__search"]}>
+        <form
+          className={styles["mobile-nav__search"]}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (mobileSearchQuery.trim()) {
+              router.push(`/search?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
+              setMobileNavOpen(false);
+            }
+          }}
+        >
           <input
             type="search"
             className="input input--search"
             placeholder="Search..."
+            value={mobileSearchQuery}
+            onChange={(e) => setMobileSearchQuery(e.target.value)}
             aria-label="Search products"
           />
-        </div>
+        </form>
 
         <div className={styles["mobile-nav__links"]}>
           <Link href="/" className={styles["mobile-nav__link"]} onClick={() => setMobileNavOpen(false)}>
