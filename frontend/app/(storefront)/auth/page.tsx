@@ -67,7 +67,7 @@ export default function AuthPage() {
       return;
     }
 
-    const formattedPhone = "0" + phone;
+    const formattedPhone = phone.startsWith("0") ? phone : "0" + phone;
     setLoading(true);
 
     try {
@@ -99,7 +99,7 @@ export default function AuthPage() {
       return;
     }
 
-    const formattedPhone = "0" + phone;
+    const formattedPhone = phone.startsWith("0") ? phone : "0" + phone;
     setLoading(true);
 
     try {
@@ -195,7 +195,7 @@ export default function AuthPage() {
                   onClick={async () => {
                     try {
                       setLocalError(null);
-                      await sendOtp("0" + phone);
+                      await sendOtp(phone.startsWith("0") ? phone : "0" + phone);
                       setOtpTimer(120);
                     } catch (err: any) {
                       setLocalError(err.message || "Failed to resend OTP.");
@@ -274,7 +274,10 @@ export default function AuthPage() {
                     className={`${styles["auth-input"]} ${styles["auth-phone-input"]}`}
                     placeholder="1XXXXXXXXX"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      setPhone(val.startsWith("0") ? val.slice(1, 11) : val.slice(0, 10));
+                    }}
                     id="auth-phone"
                     required
                   />
