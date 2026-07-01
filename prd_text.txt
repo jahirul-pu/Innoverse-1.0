@@ -1,0 +1,932 @@
+Product Requirements Document (PRD) 
+Innoverse Technologies — E-Commerce Platform 
+ 
+ 
+Version 
+1.1 (Draft) 
+Date 
+July 2026 
+Prepared for 
+Innoverse Technologies 
+Status 
+Draft — for review and iteration 
+Market 
+Bangladesh 
+ 
+Changelog (v1.1): Removed customer-facing "sourcing" language throughout (stock status is 
+now simply In Stock/Out of Stock); added safety-stock inventory management for fast-moving 
+SKUs (§6.3); narrowed payment to Cash on Delivery + BanglaQR only (§5.9, §9.1); narrowed 
+shipping to Pathao only (§9.2); guest checkout confirmed with a login nudge, no minimum order 
+value, and VAT-inclusive pricing not broken out at checkout (§5.8, §5.9, §4); added §16, steps to 
+reduce product return rate. 
+ 
+ 
+1. Executive Summary 
+Innoverse Technologies is a Bangladesh-based, online-only e-commerce platform selling retail 
+gadgets and electronics to enthusiasts and everyday customers. Unlike traditional retailers, 
+Innoverse combines safety stock for fast-moving items with on-demand sourcing for the 
+rest of its catalog — an internal operational model that stays invisible to the customer, who 
+simply experiences a standard, reliable stock and delivery flow. Because there is no physical 
+storefront, the website itself is the product — customer experience, trust, speed, and clarity are 
+the primary competitive levers. 
+ 
+This document expands the founder's original requirements into a complete PRD: functional 
+requirements for the storefront and admin panel, non-functional requirements, 
+Bangladesh-specific payment and logistics considerations, an order lifecycle, success metrics, 
+risks, and open questions to resolve before design/development begins. 
+ 
+ 
+2. Business Overview 
+2.1 Business Model 
+-​
+Online-only, direct-to-consumer e-commerce (no physical retail presence). 
+-​
+Source-on-demand + safety stock: most products are sourced based on market trend, 
+demand, and supplier availability rather than bulk pre-stocked inventory, while 
+fast-moving/high-demand SKUs are backed by a safety stock buffer to keep them 
+reliably available (§6.3). This is an internal operational detail — the storefront always 
+presents a simple, standard stock experience (In Stock / Out of Stock) to the customer, 
+never a "made to order" or sourcing-based narrative (§5.5). 
+-​
+Revenue from product margin; potential future revenue from featured listings/brand 
+placements once the platform matures. 
+2.2 Objectives 
+1.​ Launch a fast, trustworthy, mobile-first storefront that converts browsers into buyers. 
+2.​ Present a simple, standard stock and delivery experience to the customer — In Stock / 
+Out of Stock, honest delivery timelines — while sourcing and safety-stock operations 
+stay entirely behind the scenes. 
+3.​ Support the payment and delivery realities of Bangladesh (BanglaQR, COD, nationwide 
+Pathao coverage). 
+4.​ Give the admin/ops team the tools to manage a fast-moving, trend-driven catalog without 
+chaos, and to keep product returns low. 
+2.3 Target Audience 
+-​
+Tech & gadget enthusiasts: early adopters looking for unique, niche, or hard-to-find 
+electronics not commonly available in local markets. 
+-​
+Everyday customers: buyers looking for common gadgets/accessories (chargers, 
+earbuds, smart devices, home electronics) with reliable service and fair pricing. 
+-​
+Primarily mobile-first users — the majority of e-commerce traffic in Bangladesh comes 
+from mobile devices, so mobile UX is not optional polish, it's the primary experience. 
+ 
+ 
+3. Scope 
+3.1 In Scope — Version 1 (Launch) 
+-​
+Customer-facing storefront (browsing, search, product detail, cart, checkout, payment, 
+order tracking, account management). 
+-​
+Admin panel for product, inventory, order, and content management. 
+-​
+Bangladesh-specific payment options (Cash on Delivery and BanglaQR) and 
+Inside/Outside Dhaka delivery logic via Pathao. 
+-​
+Basic marketing tools (homepage carousel/banners, featured categories, 
+discounts/coupons). 
+3.2 Out of Scope — V1 (candidates for later phases) 
+-​
+Native mobile apps (iOS/Android) — V1 is a responsive website. 
+-​
+Multi-vendor/marketplace functionality. 
+-​
+Loyalty/rewards program. 
+-​
+Live chat / AI chatbot support (recommended for Phase 2 — see §12). 
+-​
+International shipping / multi-currency. 
+-​
+Subscription or pre-order-with-deposit flows (recommended addition — see §12). 
+ 
+ 
+4. Assumptions & Constraints 
+-​
+Business will maintain safety stock for fast-moving/high-demand SKUs and source 
+other items on demand behind the scenes (§6.3). The storefront always uses standard 
+stock language (In Stock / Out of Stock) — sourcing is an internal operations concern, 
+never a customer-facing narrative. 
+-​
+Primary market is Bangladesh; primary delivery split is Inside Dhaka vs. Outside 
+Dhaka, each with different cost/time expectations, fulfilled entirely through Pathao. 
+-​
+Payment at launch is limited to Cash on Delivery and BanglaQR — no separate card 
+gateway or individual MFS integrations. COD will likely remain the dominant method, so 
+the platform must be designed to reduce COD risk (fake/failed orders), not just accept it. 
+-​
+Displayed prices are VAT-inclusive; VAT is not itemized separately anywhere in the 
+customer-facing experience. 
+-​
+No minimum order value — checkout is available at any cart total. 
+-​
+Guest checkout is allowed, but the flow nudges customers to log in or create an 
+account so they have a record of their order — it does not gate checkout behind login. 
+-​
+Team has not yet finalized tech stack, budget, or timeline — this PRD is scope-first and 
+stack-agnostic, with a recommendation in §10. 
+-​
+Requirements will evolve iteratively during design — this document should be treated as 
+a living artifact, versioned as it changes. 
+ 
+ 
+5. Functional Requirements — Frontend (Customer-Facing) 
+5.1 Global Header (all pages) 
+-​
+Logo (links to homepage). 
+-​
+Search bar with auto-suggest (products, categories, brands) and recent/popular 
+searches. 
+-​
+Primary navigation menu (categories, deals, brands). 
+-​
+Account/Login icon → login, register, or account dropdown if logged in. 
+-​
+Dark/Light mode toggle (persists via user preference/cookie). 
+-​
+Cart icon with live item-count badge. 
+-​
+Addition: Sticky header on scroll for quick access to search/cart while browsing long 
+pages. 
+5.2 Homepage 
+1.​ Detailed, easy-to-navigate mega-menu (categories with sub-categories, images/icons for 
+scannability). 
+2.​ Hero carousel — latest deals, exclusive/featured items, seasonal campaigns 
+(admin-manageable, scheduled start/end dates). 
+3.​ Quick category shortcuts (icon-based tiles: e.g., Audio, Smart Home, Wearables, 
+Accessories). 
+4.​ Latest products / new arrivals section. 
+5.​ Deals / discounted items section. 
+6.​ Addition: "Trending Now" or "Most Wanted" section — fits the trend-driven catalog and 
+doubles as informal demand-signal marketing. 
+7.​ Addition: Trust strip — payment method icons, delivery coverage, return policy badge, 
+"authentic products" assurance (important for gadget buyers wary of counterfeits). 
+8.​ Footer (see §5.3). 
+5.3 Footer 
+-​
+Terms & Conditions, FAQ, Privacy Policy, Cookie Policy, Return Policy, Payment Policy. 
+-​
+Social media links. 
+-​
+Parcel/order tracking (quick tracking-number lookup, no login required). 
+-​
+Additions: About Us, Contact Us (phone/email/WhatsApp), Warranty Policy (relevant for 
+electronics), Careers (optional), Sitemap. 
+5.4 Category / Product Listing Page (new — implied but not in original list) 
+-​
+Grid/list toggle view. 
+-​
+Filters: price range, brand, category, availability (In Stock / Out of Stock), rating, 
+discount. 
+-​
+Sort: price (low–high/high–low), newest, best-selling, top-rated. 
+-​
+Pagination or infinite scroll. 
+-​
+Breadcrumb navigation. 
+5.5 Product Detail Page 
+-​
+Image carousel/gallery with zoom; images update based on selected color/variant. 
+-​
+Product name, short description, brand. 
+-​
+Stock status: a simple In Stock or Out of Stock indicator — kept deliberately simple, 
+with no visibility into internal sourcing or supply operations. 
+-​
+Quantity selector. 
+-​
+Add to Cart, Buy Now, Add to Favourites/Wishlist buttons. 
+-​
+Color/variant selector that updates the product image in real time. 
+-​
+Price display: original price, discount amount, discount percentage, final price. 
+-​
+Detailed description (specs table recommended for electronics — dimensions, 
+compatibility, warranty, box contents). 
+-​
+Additions: 
+-​
+Product reviews & ratings (post-delivery, verified purchase only). 
+-​
+Related / "You may also like" and "Frequently bought together" sections. 
+-​
+Warranty/return eligibility info specific to the product. 
+-​
+Share product (social/link copy). 
+-​
+Estimated delivery date shown before add-to-cart (based on delivery zone and 
+Pathao timelines), not just after checkout. 
+5.6 Search & Filter 
+-​
+Global search with type-ahead suggestions, typo tolerance, and category-aware results. 
+-​
+Filter/sort as in §5.4, consistently applied across search results. 
+5.7 Cart (Slide-out Drawer) 
+-​
+Opens from the side (left, per original spec — confirm left vs. right with design team, 
+right is more conventional in most markets but left is fine if intentional) on Add-to-Cart or 
+cart-icon click. 
+-​
+Line items: product image/name/variant, quantity (editable), unit price, line total. 
+-​
+Subtotal, applied discounts/coupons, estimated total. 
+-​
+Remove item / save-for-later option. 
+-​
+Clear "Proceed to Checkout" CTA. 
+-​
+Empty-cart state with a call to action (e.g., link to trending products). 
+5.8 Checkout Page 
+-​
+Guest checkout allowed by default — never gated behind login, to protect conversion. 
+The flow should clearly but gently nudge the customer to sign in or create an account, 
+framed around convenience ("Sign in to save this order to your account and track it 
+later") rather than as a requirement. 
+-​
+Fields: full name, delivery address, contact number, delivery zone (Inside Dhaka / 
+Outside Dhaka, driving both shipping cost and estimated delivery time). 
+-​
+Saved addresses for logged-in customers. 
+-​
+Order summary sidebar (persistent across checkout steps). 
+-​
+Coupon/promo code field. 
+-​
+No minimum order value — checkout proceeds at any cart total. 
+-​
+Addition: Delivery time estimate shown per item, based on delivery zone and Pathao's 
+timelines, and a combined "expected delivery window" for the order. 
+5.9 Payment Page 
+Kept deliberately simple — two options at launch: 
+ 
+-​
+Cash on Delivery (COD). 
+-​
+BanglaQR: Bangladesh Bank's interoperable national QR payment standard. The 
+customer scans one QR code at checkout using whichever banking or mobile financial 
+services app they already have — bKash, Nagad, Rocket, or a participating bank app — 
+and pays directly from their own account. Because it's interoperable by design, this 
+single option covers all the major digital payment rails without the platform needing 
+separate bKash/Nagad/card integrations. See §9.1 for integration notes. 
+-​
+Addition — COD risk mitigation: optional small non-refundable advance/deposit (via 
+BanglaQR) on COD orders, and/or SMS/call verification before dispatch, since 
+return-to-origin (failed COD delivery) is a known cost driver in Bangladesh e-commerce. 
+-​
+Clear breakdown: item total, discount, delivery charge, grand total. Prices are 
+VAT-inclusive and VAT is not shown as a separate line item. 
+5.10 Order Confirmation 
+-​
+On successful order placement: confirmation modal/page with a thank-you message, 
+order/tracking number, order summary, and estimated delivery date. 
+-​
+Automatic confirmation via SMS and/or email (see §5.13). 
+-​
+Addition: If the customer checked out as a guest, this screen also prompts a quick 
+account creation (pre-filled from their checkout details) so they have a record of the 
+order — framed as a convenience, not a requirement. 
+5.11 Customer Portal / Account 
+-​
+Register/login (email/phone + password, and/or OTP login — OTP is common and 
+trusted in the Bangladeshi market). 
+-​
+Manage saved addresses (multiple, with a default). 
+-​
+Order history: view past orders, invoices/receipts. 
+-​
+Live order tracking: current status with a visual timeline (Placed → Confirmed → 
+Processing → Shipped → Out for Delivery → Delivered), plus Pathao tracking 
+link/number once shipped. 
+-​
+Manage wishlist/favourites. 
+-​
+Manage account details, password/PIN, logout. 
+-​
+Addition: Return/refund request flow initiated from order history. 
+5.12 Wishlist / Favourites 
+-​
+Add/remove from product page and listing pages. 
+-​
+Dedicated wishlist page; move-to-cart action. 
+-​
+Addition: "Notify me" toggle for out-of-stock items — the customer is simply offered a 
+notification when it's back, with no visibility into why it was unavailable. 
+5.13 Notifications 
+-​
+Transactional SMS and/or email at key milestones: order placed, confirmed, shipped, out 
+for delivery, delivered, and for any status delay (especially relevant when delivery 
+windows vary by zone or item). 
+-​
+Addition: WhatsApp notifications, increasingly used by Bangladeshi e-commerce for its 
+high open rates, as a Phase 2 option. 
+5.14 Responsive & Performance 
+-​
+Fully responsive across mobile, tablet, desktop, with mobile treated as the primary 
+experience given traffic patterns. 
+-​
+Fast page loads and lightweight image handling (see §8.1). 
+ 
+ 
+6. Functional Requirements — Admin Panel 
+6.1 Dashboard (Home) 
+-​
+At-a-glance metrics: today's orders, revenue, pending fulfillment, low-stock / safety-stock 
+alerts, top-selling products. 
+6.2 Product Management 
+-​
+Add/edit/delete products with all storefront-facing fields: name, short & long description, 
+category, brand, images (multiple), color/variant options, price, discount 
+amount/percentage, SKU, specs table. 
+-​
+Stock quantity and customer-facing status (In Stock / Out of Stock) — kept simple on the 
+storefront; internal sourcing detail lives separately in §6.3. 
+-​
+SEO fields (meta title/description, URL slug). 
+-​
+Publish/Draft/Archived status toggle. 
+-​
+Bulk import/export (CSV) for managing large or fast-changing catalogs efficiently. 
+6.3 Inventory Management 
+-​
+Track stock quantity per product/variant; the customer-facing status (In Stock / Out of 
+Stock) can flip automatically at zero quantity, or be set manually for items awaiting 
+restock. 
+-​
+Safety stock: flag specific SKUs as fast-moving/high-demand and set a minimum 
+safety-stock threshold for each. The dashboard alerts the ops team when a flagged item 
+drops below its threshold, so it can be reordered before it actually runs out. 
+-​
+Low-stock and reorder alerts for the ops team — internal only, never shown to the 
+customer. 
+-​
+Internal sourcing/supplier notes per product (source, lead time) for the team's own 
+planning — this stays entirely out of the customer-facing storefront, consistent with 
+keeping the sourcing model invisible to customers (§2.1). 
+6.4 Category & Brand Management 
+-​
+Create/edit/reorder categories and sub-categories. 
+-​
+Add/edit brands (name, logo, description) — brand pages optional for Phase 2. 
+6.5 Order Management 
+-​
+Order list with filters (status, date, payment method, delivery zone). 
+-​
+Order detail view: items, customer info, payment status, delivery zone, assigned courier. 
+-​
+Update order status along the fulfillment pipeline (§7). 
+-​
+Generate/print invoice and shipping label. 
+-​
+Process refunds/store credit for returns or cancellations. 
+-​
+Flag/manage failed COD or return-to-origin (RTO) orders. 
+-​
+Attach a packing photo/video and log the return reason on any returned order — feeds 
+directly into the return-reduction process in §16. 
+6.6 Customer Management 
+-​
+View customer list, order history per customer, contact details. 
+-​
+Ability to block/flag customers with repeated failed COD orders (a real operational need 
+in COD-heavy markets). 
+6.7 Marketing & Promotions 
+-​
+Manage homepage carousel/banners (image, link, schedule). 
+-​
+Create discount codes/coupons (percentage, flat amount, min. order value, expiry, usage 
+limits). 
+-​
+Manage "Featured," "Trending," and "Latest Deals" product collections shown on the 
+homepage. 
+6.8 Content Management 
+-​
+Edit footer/static pages (Terms, FAQ, Privacy Policy, Cookie Policy, Return Policy, 
+Payment Policy, About, Contact) without needing a developer. 
+6.9 Shipping & Logistics Management 
+-​
+Configure delivery zones (Inside Dhaka / Outside Dhaka) and associated 
+charges/timelines. 
+-​
+Hand off orders to Pathao and record tracking numbers against each order. 
+-​
+Recommended: integrate Pathao's merchant API for automatic status sync, so delivery 
+updates flow into the order timeline (§7) without manual entry. 
+6.10 Payment & Finance 
+-​
+View payment status per order (Paid / COD Pending / Refunded). 
+-​
+Reconcile settlements from the BanglaQR acquiring partner/bank. 
+-​
+Basic sales and revenue reports. 
+6.11 Roles & Permissions 
+Recommended baseline roles (can be refined later): 
+ 
+Role 
+Access 
+Super Admin 
+Full access, including user/role management 
+Product Manager 
+Products, inventory, categories, brands 
+Order/Fulfillment Manager 
+Orders, shipping, returns/refunds 
+Marketing 
+Banners, coupons, featured collections, 
+content pages 
+Customer Support 
+Customer info (read-only), order status 
+(read/limited update) 
+6.12 Reports & Analytics 
+-​
+Sales over time, best-selling products, category performance. 
+-​
+Delivery performance (on-time %, RTO rate via Pathao) — important given COD/RTO is 
+a known cost driver. 
+-​
+Return rate by product/category, broken down by reason (defective, wrong item, 
+changed mind, etc.) — the core data source for the return-reduction process in §16. 
+-​
+Traffic and conversion basics (can also live in Google Analytics/GA4, integrated 
+separately). 
+ 
+ 
+7. Order Lifecycle / Status Workflow 
+Order Placed → Confirmed → Processing → Ready to Ship →  
+ 
+Shipped (Pathao) → Out for Delivery → Delivered → Completed 
+ 
+           ↘ Cancelled (by customer/admin, pre-shipment) 
+ 
+           ↘ Returned → Refunded / Store Credit 
+ 
+           ↘ Failed Delivery / RTO → Re-attempt or Refund 
+ 
+-​
+Each transition should trigger a customer notification (§5.13) and be visible on the 
+tracking timeline (§5.11). 
+-​
+"Processing" is a single neutral status covering whatever happens internally — 
+picking, sourcing, packing, QC — so operational detail never surfaces to the customer, 
+while delivery estimates (§5.8) still keep them honestly informed on timing. 
+ 
+ 
+8. Non-Functional Requirements 
+8.1 Performance 
+-​
+Target page load under ~2–3 seconds on mobile 4G; optimized/compressed images 
+(especially important for a gadget catalog with many product photos). 
+-​
+Lazy-loading for images below the fold. 
+8.2 Security & Compliance 
+-​
+SSL/HTTPS across the entire site. 
+-​
+Prefer a hosted/redirect payment flow from the BanglaQR acquiring partner (customer 
+redirected to a secure payment page to scan and pay) rather than handling any banking 
+credentials directly on the platform. 
+-​
+Secure authentication (hashed passwords, optional OTP), rate-limiting on login/checkout 
+to prevent abuse. 
+-​
+Customer data protection in line with Bangladesh's Digital Commerce Operation 
+Guideline and general data-protection best practice. 
+8.3 Scalability 
+-​
+Architecture should handle traffic spikes during promotional campaigns (flash sales, 
+festival seasons like Eid) without degradation. 
+8.4 SEO 
+-​
+Clean URLs, meta tags, structured data (schema.org Product markup) for rich search 
+results, sitemap.xml. 
+8.5 Accessibility 
+-​
+Reasonable baseline accessibility (readable contrast in both dark/light modes, alt text on 
+images, keyboard-navigable menus). 
+8.6 Browser/Device Compatibility 
+-​
+Latest versions of Chrome, Safari, Firefox, Edge; iOS and Android mobile browsers, 
+given mobile-first traffic. 
+8.7 Availability 
+-​
+Target uptime (e.g., 99.5%+), with monitoring/alerting on downtime, especially during 
+active promotions. 
+ 
+ 
+9. Bangladesh-Specific Considerations 
+9.1 Payment Options 
+Payment at launch is intentionally kept to two methods: 
+ 
+Option 
+Notes 
+Cash on Delivery (COD) 
+Must remain available regardless of digital 
+options — still the most trusted method for 
+many Bangladeshi shoppers buying 
+electronics from a new/unfamiliar brand. 
+Option 
+Notes 
+BanglaQR 
+Bangladesh Bank's interoperable national QR 
+payment standard. The customer scans a 
+single QR code at checkout using whichever 
+banking or mobile financial services app they 
+already have — bKash, Nagad, Rocket, or a 
+participating bank app — and pays directly 
+from their own account. Because it's 
+interoperable by design, one integration 
+effectively covers all major digital payment 
+rails, rather than integrating bKash, Nagad, 
+and cards separately. Bangladesh Bank has 
+been actively pushing adoption, mandating 
+banks and financial service providers replace 
+proprietary QR codes with BanglaQR at 
+merchant points. 
+ 
+Integration note: BanglaQR isn't built in-house — it's issued through a bank or a licensed 
+acquirer/aggregator that supports it (e.g., SSLCommerz's Bangla QR product, or a merchant 
+account directly with your business's bank). Worth flagging: Pathao Pay — the payments arm of 
+your chosen courier partner (§9.2) — has recently joined the BanglaQR interoperability network 
+and has publicly stated plans to extend it to online checkout. That could eventually let Innoverse 
+run delivery and payment through a single partner relationship; confirm current availability 
+directly with Pathao Pay before committing, since this capability is still expanding. 
+ 
+Recommendation: Launch with COD + BanglaQR via a licensed acquirer/bank partner. This 
+keeps the payment page simple — two clear choices — while BanglaQR's interoperability still 
+reaches the large majority of Bangladesh's digital payment users. 
+9.2 Shipping & Logistics 
+Pathao is the sole shipping/logistics partner at launch, covering both Inside Dhaka (faster, 
+cheaper) and Outside Dhaka (nationwide) delivery, consistent with the checkout's delivery-zone 
+requirement. 
+ 
+Recommendation: Integrate Pathao's merchant API for automatic status sync (tracking 
+numbers, delivery status flowing directly into the order timeline in §7) rather than updating 
+statuses manually. Revisit adding a second courier only if Pathao's coverage or performance in 
+a specific region becomes a real bottleneck — not before. 
+ 
+Operational note: Return-to-origin (failed COD delivery) is a known cost driver in the 
+Bangladeshi market regardless of courier. Consider phone/SMS order verification before 
+dispatch and/or a small advance payment on COD orders above a certain value to reduce 
+fake/failed orders. 
+9.3 Regulatory Notes 
+-​
+Be aware of Bangladesh's Digital Commerce Operation Guideline (from the Ministry 
+of Commerce) governing online business practices, refund timelines, and payment 
+escrow-style protections — worth a legal review before launch, particularly for the Terms 
+& Conditions, Return Policy, and Payment Policy pages. 
+-​
+Displayed prices are VAT-inclusive and VAT is not itemized separately in the 
+customer-facing experience; confirm the specific treatment and rate with a local 
+accountant to ensure invoices remain compliant even though the breakdown isn't shown 
+to the customer. 
+ 
+ 
+10. Suggested Technology Stack (optional — for discussion with 
+your dev team) 
+This is a starting point, not a final decision: 
+ 
+-​
+Frontend: Next.js (React) for performance/SEO, or a headless setup if flexibility for 
+future channels (app, marketplace) is a priority. 
+-​
+Backend/Admin: Node.js/Express or a Python (Django) backend with a dedicated 
+admin panel; alternatively, a headless commerce platform (e.g., Medusa, Saleor) to 
+accelerate build time. 
+-​
+Database: PostgreSQL. 
+-​
+Payments: BanglaQR via a licensed acquirer/bank partner, e.g., SSLCommerz's Bangla 
+QR product (§9.1). 
+-​
+Hosting: Cloud provider with CDN for image-heavy product pages (e.g., a provider with 
+good latency to Bangladesh/South Asia). 
+-​
+Notifications: SMS gateway (local BD provider) + email service (e.g., transactional 
+email provider) + optional WhatsApp Business API for Phase 2. 
+ 
+ 
+11. Success Metrics / KPIs 
+-​
+Conversion rate (visits → orders). 
+-​
+Cart abandonment rate. 
+-​
+Average order value (AOV). 
+-​
+Repeat purchase rate. 
+-​
+Delivery success rate / RTO rate. 
+-​
+Average page load time. 
+-​
+Customer satisfaction (post-delivery survey/NPS). 
+ 
+ 
+12. Future Enhancements (Phase 2+) 
+-​
+Native mobile app (iOS/Android). 
+-​
+Live chat / WhatsApp support widget. 
+-​
+Loyalty/rewards program. 
+-​
+Pre-order with deposit for high-demand new arrivals (helps manage demand spikes 
+without exposing stock/sourcing mechanics to the customer). 
+-​
+Additional digital payment methods (cards, direct MFS) once transaction volume justifies 
+the extra integration overhead. 
+-​
+A second courier partner for redundancy/coverage, once Pathao performance data 
+shows where it's needed. 
+-​
+Product Q&A section. 
+-​
+Multi-vendor marketplace expansion. 
+-​
+Personalized recommendations (browsing/purchase-history based). 
+-​
+Loyalty program / referral system. 
+ 
+ 
+13. Risks & Mitigations 
+Risk 
+Mitigation 
+Item marked "In Stock" but actually delayed 
+internally (sourcing/restock lag) 
+Safety stock thresholds and low-stock alerts 
+(§6.3); only mark an item In Stock when it's 
+reliably available 
+High COD return-to-origin (RTO) rate 
+SMS/call verification, optional deposit on 
+high-value COD orders, Pathao performance 
+tracking 
+High post-delivery product return rate 
+(defects, mismatched expectations, buyer's 
+remorse) 
+Dedicated set of return-reduction measures 
+— see §16 
+Trust concerns as a new, unfamiliar online 
+brand selling electronics 
+Clear return/warranty policy, visible trust 
+badges, reviews, responsive customer 
+support 
+Risk 
+Mitigation 
+BanglaQR/acquirer downtime or failed 
+transactions at checkout 
+COD as reliable fallback; monitor acquirer 
+uptime 
+Single-courier dependency (Pathao) creating 
+a coverage or performance bottleneck 
+Monitor on-time/RTO rate by region; keep a 
+second courier as a Phase 2 contingency 
+(§12) 
+Stale inventory data leading to selling items 
+that are actually unavailable 
+Keep stock quantity/status tightly synced 
+between admin and storefront; auto-flip to 
+Out of Stock at zero quantity 
+ 
+ 
+14. Open Questions / Decisions Needed 
+Decided (as of this revision): payment is COD + BanglaQR only; shipping is Pathao only; 
+guest checkout is allowed with a login nudge; there's no minimum order value; prices are 
+VAT-inclusive and VAT isn't shown separately; safety stock will be maintained for 
+fast-moving/high-demand SKUs. 
+ 
+Still open: 
+ 
+1.​ Which BanglaQR acquirer/bank partner to use (e.g., SSLCommerz's Bangla QR product 
+vs. a direct bank merchant account), based on fees and settlement speed — and 
+whether to revisit Pathao Pay once it extends BanglaQR to online checkout. 
+2.​ What is the target launch timeline and budget, to help prioritize V1 scope vs. Phase 2 
+features? 
+3.​ Which SKUs qualify as "fast-moving/high-demand" for safety stock at launch — based 
+on any historical sales data, or founder judgment until data exists? 
+4.​ What's the return policy window and conditions (e.g., 7-day, unopened vs. opened, 
+defective-only vs. change-of-mind)? This directly feeds the return-reduction measures in 
+§16. 
+ 
+ 
+15. Proposed Visual Style Direction 
+Since there's no existing brand identity yet, this is a proposed starting point — grounded in the 
+product itself rather than a generic e-commerce template — for your designer/developer to react 
+to and refine. 
+15.1 Concept: "The Spec Sheet" 
+Position Innoverse visually as the technician, not the hype-seller. The direction borrows its 
+visual language from the objects the audience already trusts and reads fluently: datasheets, 
+multimeter readouts, PCB silkscreen, spec tables. Every color and label carries functional 
+meaning (a stock status, a price, an order state) rather than existing purely for decoration — 
+which also reinforces the platform's promise of clear, simple stock and delivery information, 
+without ever surfacing internal supply-chain detail to the customer (§5.5). It should feel precise, 
+quietly confident, and a little bit workshop — not loud, not luxury, not another blue-and-white 
+marketplace template. 
+15.2 Color Palette 
+Name 
+Hex 
+Role 
+Fog 
+#F3F4F1 
+Light-mode background 
+("paper") 
+Graphite 
+#17191C 
+Dark-mode background 
+Ink 
+#1C1E20 
+Primary text (light mode); 
+becomes #EDEFF0 on dark 
+Signal Amber 
+#FF7A29 
+Primary accent — CTAs, 
+discounts, "Buy Now," price 
+emphasis 
+Trace Blue 
+#2F6FED 
+Secondary accent — links, 
+and order-tracking states 
+(Processing, Shipped, Out for 
+Delivery) 
+Circuit Green 
+#2BB673 
+Success/positive — "In 
+Stock," Delivered, 
+confirmations 
+ 
+Amber, blue, and green function like status LEDs on a device: amber = act now (CTAs, 
+discounts), blue = in progress (order tracking), green = good to go (in stock, delivered). This 
+gives stock and order states a consistent, native visual vocabulary across the whole site instead 
+of ad hoc badge colors. 
+15.3 Typography 
+Role 
+Typeface 
+Usage 
+Display 
+Space Grotesk 
+Headlines, category titles — 
+geometric with a slightly 
+technical edge, used with 
+restraint (large sizes only) 
+Body 
+IBM Plex Sans 
+Body copy, descriptions, UI 
+labels — a face genuinely 
+designed for 
+technical/engineering 
+documentation, so it reads as 
+credible on spec-heavy 
+product pages 
+Data / Numerals 
+IBM Plex Mono (or JetBrains 
+Mono) 
+Prices, discount %, SKUs, 
+order/tracking numbers, 
+countdowns — set with 
+tabular figures 
+ 
+All three are free and widely available (Google Fonts), so there's no licensing friction for 
+development. 
+ 
+Signature element: prices, discount percentages, delivery-date estimates, and order-tracking 
+numbers are all set in the monospace data face — like a multimeter or spec-sheet reading. It's 
+the one deliberate "risk" in the system: it makes numbers feel measured and precise rather than 
+shouted, and it's something a competitor's generic template won't have. 
+15.4 Layout Notes 
+-​
+Grid-based product listings; generous whitespace; thin 1px hairline dividers between 
+sections (like a PCB trace or a spec-table row) instead of heavy drop shadows. 
+-​
+Minimal border-radius — sharp-ish corners on cards and buttons (4–6px), reinforcing the 
+"instrument panel" feel rather than a soft, plush consumer-app look. 
+-​
+Every product card carries a small status dot (green = in stock, grey = out of stock) next 
+to a monospace price. The same dot-plus-label pattern reappears in the order-tracking 
+timeline using blue for in-progress states (Processing, Out for Delivery) — one 
+consistent visual system for "where things stand," everywhere on the site. 
+ 
+┌─────────────────────────────┐ 
+ 
+│  [ product photo ]           │ 
+ 
+│                               │ 
+ 
+│  ● IN STOCK                  │   ← status dot + mono label 
+ 
+│  Wireless ANC Earbuds        │   ← Space Grotesk 
+ 
+│  ৳ 3,450  ৳2,990  −13%       │   ← IBM Plex Mono, tabular 
+ 
+└─────────────────────────────┘ 
+15.5 Light / Dark Mode 
+Token 
+Light 
+Dark 
+Background 
+Fog #F3F4F1 
+Graphite #17191C 
+Surface (cards) 
+#FFFFFF 
+#1F2226 
+Text 
+Ink #1C1E20 
+#EDEFF0 
+Border/divider 
+#DEDFDB 
+#2B2E32 
+Accents 
+Same amber/blue/green, 
+unchanged 
+Same hues, +8–10% 
+lightness for contrast 
+ 
+Keeping the accent hues identical across modes (only adjusting lightness) keeps the "status 
+LED" language consistent regardless of which mode the customer is in. 
+15.6 Motion 
+Restrained by default: a subtle lift + shadow on card hover, a soft pulse on the blue "Out for 
+Delivery" indicator in the order-tracking timeline to imply it's actively updating, snappy (not 
+animated) page transitions. Respect prefers-reduced-motion. No large gradient washes or 
+scroll-triggered fireworks — the personality lives in type and the status system, not in animation. 
+15.7 What This Deliberately Avoids 
+To keep this from reading as a generic template, it steers away from the current default 
+AI-design clichés: no warm-cream-and-serif-terracotta look, no 
+near-black-background-with-a-single-acid-green-accent look, and no dense 
+broadsheet/hairline-newspaper layout. It also avoids the generic "big blue trust-badge 
+marketplace" look most regional e-commerce sites default to — the goal is for Innoverse to look 
+like it was built by people who understand the products, not like a template with a logo swapped 
+in. 
+ 
+ 
+16. Steps to Reduce Product Return Rate 
+Returns on electronics are typically driven by five root causes: unclear expectations, defects, 
+wrong item shipped, "didn't know how to use it," and simple change-of-mind. Each has a 
+concrete, low-cost fix: 
+16.1 Set accurate expectations before purchase 
+-​
+Real product photography from multiple angles (not just manufacturer stock images) — 
+customers should see the actual item, actual color, actual scale. 
+-​
+Complete specs table on every product page (§5.5): dimensions, compatibility, box 
+contents, warranty terms — the details customers rely on when they can't physically 
+inspect the item. 
+-​
+Short demo/unboxing video for higher-complexity gadgets, where feasible. 
+-​
+Genuine, unedited customer reviews and photos — curated-only reviews erode the trust 
+they're meant to build. 
+16.2 Catch defects before they ship 
+-​
+Quality-control checklist for every unit with a battery or electronics inside: power-on test, 
+physical inspection, accessory count, before packing. 
+-​
+Photo/video proof of the item at the point of packing, attached to the order in the admin 
+panel (§6.5) — this protects both the business and the customer in any dispute, and is 
+especially useful for COD orders where there's no card-payment paper trail. 
+-​
+Protective, purpose-appropriate packaging (anti-static bags, cushioning) to prevent 
+transit damage — cheap insurance against a costly return. 
+16.3 Get the right item to the right person 
+-​
+Barcode/SKU scan verification at the packing stage to catch picking errors before 
+dispatch. 
+-​
+Selected color/variant carried through cleanly from cart → order → packing label, so 
+what's picked always matches what was ordered. 
+16.4 Support customers before they decide to return 
+-​
+A short quick-start guide included with the product, plus a link to setup help/FAQ specific 
+to that item — many "defective" returns are really "didn't know how to use it." 
+-​
+A responsive support channel (phone/WhatsApp) that can walk a customer through 
+setup or basic troubleshooting before a return is initiated. 
+-​
+For genuine faults, offer a replacement or guided fix before defaulting straight to a 
+refund. 
+16.5 Reduce COD-related "returns" at the doorstep 
+-​
+Order verification call/SMS before dispatch, especially on higher-value orders — a large 
+share of doorstep refusals are simply orders the customer forgot about or never fully 
+committed to. 
+-​
+Optional small advance deposit on COD orders flagged as higher-risk (§6.6), which 
+meaningfully cuts down casual/fake orders. 
+16.6 Design the return policy to reduce ambiguity 
+-​
+A clear, simple return window (e.g., 7 days) stated in plain language, with explicit 
+conditions — unopened vs. opened, defective vs. change-of-mind — since ambiguity is 
+what drives both customer disputes and policy abuse. 
+-​
+Favor exchange or store credit over cash refund for change-of-mind returns where 
+reasonable, protecting margin while still being fair to the customer. 
+16.7 Close the loop with data 
+-​
+Log a return reason on every returned order (§6.5), not just the fact that it was returned. 
+-​
+Review return rate by product/category regularly (§6.12) — a SKU with a persistently 
+high return rate usually points to a fixable root cause: a misleading photo, an unclear 
+spec, a packaging weak point, or a genuinely faulty batch. Fix the cause, not just the 
+individual return. 
+ 
+ 
+ 
+This PRD is a living document. As design and development progress, sections should be 
+updated, and decisions made in §14 should be reflected back into the relevant requirement 
+sections above. The style direction in §15 is a proposed starting point, not a locked brand 
+system — treat it as a base for your designer to refine once you're ready to move into 
+high-fidelity mockups. 
+ 
