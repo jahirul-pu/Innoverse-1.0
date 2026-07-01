@@ -275,7 +275,7 @@ export default function ProductDetailPage() {
           {/* Action Buttons */}
           <div className={styles.pdp__actions}>
             <button
-              className={`btn btn--primary btn--lg ${styles["pdp__add-to-cart"]}`}
+              className={`btn btn--primary ${styles["pdp__add-to-cart"]}`}
               id="add-to-cart-btn"
               onClick={async () => {
                 try {
@@ -289,7 +289,7 @@ export default function ProductDetailPage() {
               <CartPlusIcon /> Add to Cart
             </button>
             <button
-              className={`btn btn--lg ${styles["pdp__buy-now"]}`}
+              className={`btn ${styles["pdp__buy-now"]}`}
               id="buy-now-btn"
               onClick={async () => {
                 try {

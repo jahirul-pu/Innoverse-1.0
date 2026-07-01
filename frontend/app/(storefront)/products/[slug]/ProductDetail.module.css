@@ -358,11 +358,19 @@
 .pdp__add-to-cart {
   flex: 1;
   min-width: 160px;
+  max-width: 220px;
+}
+
+.pdp__add-to-cart svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .pdp__buy-now {
   flex: 1;
   min-width: 160px;
+  max-width: 220px;
   background-color: var(--color-text-primary);
   color: var(--color-bg);
   border-color: var(--color-text-primary);
