@@ -196,7 +196,7 @@ export default function Header() {
             <input
               type="search"
               className={styles["header__search-input"]}
-              placeholder="Search gadgets, brands, categories..."
+              placeholder="Search gadgets & brands (Press Enter)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               id="header-search"
@@ -316,7 +316,7 @@ export default function Header() {
           <input
             type="search"
             className="input input--search"
-            placeholder="Search..."
+            placeholder="Search (Press Enter)..."
             value={mobileSearchQuery}
             onChange={(e) => setMobileSearchQuery(e.target.value)}
             aria-label="Search products"

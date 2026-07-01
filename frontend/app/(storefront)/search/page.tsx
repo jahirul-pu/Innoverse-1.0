@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import styles from "./Search.module.css";
 import homeStyles from "../Home.module.css";
@@ -83,14 +83,13 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 function SearchContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState(urlQuery);
-  const [searchInput, setSearchInput] = useState(urlQuery);
 
   useEffect(() => {
     setQuery(urlQuery);
-    setSearchInput(urlQuery);
   }, [urlQuery]);
 
   const results = useMemo(() => {
@@ -103,33 +102,13 @@ function SearchContent() {
     );
   }, [query]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setQuery(searchInput);
-  };
-
   const handleSuggestionClick = (term: string) => {
-    setSearchInput(term);
-    setQuery(term);
+    router.push(`/search?q=${encodeURIComponent(term)}`);
   };
 
   return (
     <div className={`container ${styles["search-page"]}`}>
-      {/* Search Bar */}
-      <form className={styles["search-bar"]} onSubmit={handleSearch}>
-        <input
-          type="text"
-          className={styles["search-bar__input"]}
-          placeholder="Search gadgets, brands, categories..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          autoFocus
-          id="search-input"
-        />
-        <button type="submit" className={styles["search-bar__btn"]} id="search-btn">
-          <SearchIcon />
-        </button>
-      </form>
+
 
       {/* Suggestions */}
       <div className={styles["search-suggestions"]}>
