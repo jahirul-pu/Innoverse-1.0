@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useCart } from "@/components/providers/CartContext";
+import { productApi } from "@/lib/api";
 import styles from "./ProductListing.module.css";
 
 /* ── Reuse product card styles from homepage ── */
@@ -54,68 +57,61 @@ const CartPlusIcon = () => (
 );
 
 /* ── Mock Data ── */
-interface Product {
-  id: number;
-  name: string;
-  brand: string;
-  price: string;
-  originalPrice?: string;
-  discount?: string;
-  inStock: boolean;
-  href: string;
-  category: string;
-  description?: string;
-}
+const mockBrands = ["Amazfit", "Anker", "Baseus", "GoPro", "Govee", "JBL", "Keychron", "Logitech", "Razer", "Sony", "SoundCore", "TP-Link", "Ugreen", "XGIMI", "Xiaomi"];
 
-const allProducts: Product[] = [
-  { id: 1, name: "Wireless ANC Earbuds Pro", brand: "SoundCore", price: "৳2,990", originalPrice: "৳3,450", discount: "−13%", inStock: true, href: "/products/wireless-anc-earbuds-pro", category: "Audio", description: "40dB active noise cancellation with 32-hour battery life." },
-  { id: 2, name: "Magnetic USB-C Cable 2m", brand: "Baseus", price: "৳490", inStock: true, href: "/products/magnetic-usb-c-cable", category: "Accessories", description: "Braided nylon cable with magnetic tip for easy connection." },
-  { id: 3, name: "Smart LED Strip 5M RGB", brand: "Govee", price: "৳1,290", originalPrice: "৳1,600", discount: "−19%", inStock: true, href: "/products/smart-led-strip", category: "Smart Home", description: "App-controlled RGB strip with music sync and 16M colors." },
-  { id: 4, name: "Fitness Band 7 Pro", brand: "Amazfit", price: "৳3,490", inStock: true, href: "/products/fitness-band-7-pro", category: "Wearables", description: "SpO2, heart rate, 120+ sport modes, 18-day battery." },
-  { id: 5, name: "Mini Bluetooth Speaker", brand: "JBL", price: "৳2,190", originalPrice: "৳2,500", discount: "−12%", inStock: false, href: "/products/mini-bluetooth-speaker", category: "Audio", description: "Waterproof portable speaker with 10-hour playtime." },
-  { id: 6, name: "65W GaN Charger", brand: "Ugreen", price: "৳1,790", inStock: true, href: "/products/65w-gan-charger", category: "Accessories", description: "Compact GaN charger with 3 ports. Powers laptops and phones." },
-  { id: 7, name: "Webcam 2K AutoFocus", brand: "Logitech", price: "৳4,990", originalPrice: "৳5,500", discount: "−9%", inStock: true, href: "/products/webcam-2k-autofocus", category: "Cameras", description: "2K resolution with autofocus and dual microphones." },
-  { id: 8, name: "Smart Plug Wi-Fi 4 Pack", brand: "TP-Link", price: "৳2,290", inStock: true, href: "/products/smart-plug-wifi", category: "Smart Home", description: "Voice-controlled plugs compatible with Alexa and Google." },
-  { id: 9, name: "Noise Cancelling Headphones", brand: "Sony", price: "৳8,990", originalPrice: "৳12,500", discount: "−28%", inStock: true, href: "/products/nc-headphones", category: "Audio", description: "Industry-leading ANC with 30-hour battery and LDAC." },
-  { id: 10, name: "Smart Watch Ultra", brand: "Amazfit", price: "৳6,490", originalPrice: "৳8,900", discount: "−27%", inStock: true, href: "/products/smart-watch-ultra", category: "Wearables", description: "AMOLED display, GPS, 14-day battery, 100m water resistance." },
-  { id: 11, name: "Portable Projector Mini", brand: "XGIMI", price: "৳15,990", originalPrice: "৳19,900", discount: "−20%", inStock: true, href: "/products/portable-projector", category: "Cameras", description: "1080p portable projector with built-in speakers and Android TV." },
-  { id: 12, name: "Mechanical Keyboard RGB", brand: "Keychron", price: "৳5,490", originalPrice: "৳6,900", discount: "−20%", inStock: false, href: "/products/mechanical-keyboard", category: "Accessories", description: "Hot-swappable switches, wireless Bluetooth, Mac/Win compatible." },
-  { id: 13, name: "TWS Gaming Earbuds", brand: "Razer", price: "৳4,990", inStock: true, href: "/products/tws-gaming-earbuds", category: "Audio", description: "60ms low-latency gaming mode with THX spatial audio." },
-  { id: 14, name: "Desk Lamp Smart LED", brand: "Xiaomi", price: "৳2,490", originalPrice: "৳2,900", discount: "−14%", inStock: true, href: "/products/desk-lamp-smart", category: "Smart Home", description: "Color temperature adjustable, app control, eye-care certified." },
-  { id: 15, name: "Action Camera 4K", brand: "GoPro", price: "৳22,990", inStock: true, href: "/products/action-camera-4k", category: "Cameras", description: "4K60 video, HyperSmooth stabilization, waterproof to 10m." },
-  { id: 16, name: "USB-C Hub 7-in-1", brand: "Anker", price: "৳3,290", originalPrice: "৳3,800", discount: "−13%", inStock: true, href: "/products/usb-c-hub-7in1", category: "Accessories", description: "HDMI 4K, USB-A 3.0, SD card, 100W PD pass-through." },
+const mockFallbackProducts = [
+  { id: "1", name: "Wireless ANC Earbuds Pro", brand: { name: "SoundCore" }, price: 2990, compareAtPrice: 3450, stock: 45, slug: "wireless-anc-earbuds-pro", category: { name: "Audio", slug: "audio" }, images: [{ url: "" }] },
+  { id: "2", name: "Magnetic USB-C Cable 2m", brand: { name: "Baseus" }, price: 490, stock: 200, slug: "magnetic-usb-c-cable", category: { name: "Accessories", slug: "accessories" }, images: [{ url: "" }] },
+  { id: "3", name: "Smart LED Strip 5M RGB", brand: { name: "Govee" }, price: 1290, compareAtPrice: 1600, stock: 80, slug: "smart-led-strip", category: { name: "Smart Home", slug: "smart-home" }, images: [{ url: "" }] },
 ];
 
-const brands = ["Amazfit", "Anker", "Baseus", "GoPro", "Govee", "JBL", "Keychron", "Logitech", "Razer", "Sony", "SoundCore", "TP-Link", "Ugreen", "XGIMI", "Xiaomi"];
-const categoryList = ["Audio", "Smart Home", "Wearables", "Accessories", "Cameras", "Gaming"];
-
 /* ── Product Card (Grid View) ── */
-function ProductCardGrid({ product }: { product: Product }) {
+function ProductCardGrid({ product }: { product: any }) {
+  const { addItem } = useCart();
+  const price = Number(product.price);
+  const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
+  const discount = comparePrice && comparePrice > price
+    ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
+    : null;
+  const primaryImage = product.images?.[0]?.url;
+
   return (
-    <Link href={product.href} className={homeStyles["product-card"]} id={`listing-card-${product.id}`}>
+    <Link href={`/products/${product.slug}`} className={homeStyles["product-card"]} id={`listing-card-${product.id}`}>
       <div className={homeStyles["product-card__image"]}>
-        <div className={homeStyles["product-card__image-placeholder"]}>📦</div>
-        {product.discount && (
-          <span className={homeStyles["product-card__discount-badge"]}>{product.discount}</span>
+        {primaryImage ? (
+          <img src={primaryImage} alt={product.name} className={homeStyles["product-card__img"]} />
+        ) : (
+          <div className={homeStyles["product-card__image-placeholder"]}>📦</div>
+        )}
+        {discount && (
+          <span className={homeStyles["product-card__discount-badge"]}>{discount}</span>
         )}
         <button
           className={homeStyles["product-card__quick-add"]}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+              await addItem(product.id, 1);
+            } catch (err) {
+              console.error(err);
+            }
+          }}
           aria-label={`Add ${product.name} to cart`}
         >
           <CartPlusIcon />
         </button>
       </div>
       <div className={homeStyles["product-card__body"]}>
-        <span className={`${homeStyles["product-card__status"]} ${product.inStock ? homeStyles["product-card__status--in-stock"] : homeStyles["product-card__status--out-of-stock"]}`}>
-          {product.inStock ? "In Stock" : "Out of Stock"}
+        <span className={`${homeStyles["product-card__status"]} ${product.stock > 0 ? homeStyles["product-card__status--in-stock"] : homeStyles["product-card__status--out-of-stock"]}`}>
+          {product.stock > 0 ? "In Stock" : "Out of Stock"}
         </span>
-        <span className={homeStyles["product-card__brand"]}>{product.brand}</span>
+        <span className={homeStyles["product-card__brand"]}>{product.brand?.name}</span>
         <span className={homeStyles["product-card__name"]}>{product.name}</span>
         <div className={homeStyles["product-card__pricing"]}>
-          <span className={homeStyles["product-card__price"]}>{product.price}</span>
-          {product.originalPrice && <span className={homeStyles["product-card__price-original"]}>{product.originalPrice}</span>}
-          {product.discount && <span className={homeStyles["product-card__price-discount"]}>{product.discount}</span>}
+          <span className={homeStyles["product-card__price"]}>৳{price.toLocaleString("en-BD")}</span>
+          {comparePrice && <span className={homeStyles["product-card__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
+          {discount && <span className={homeStyles["product-card__price-discount"]}>{discount}</span>}
         </div>
       </div>
     </Link>
@@ -123,26 +119,49 @@ function ProductCardGrid({ product }: { product: Product }) {
 }
 
 /* ── Product Card (List View) ── */
-function ProductCardList({ product }: { product: Product }) {
+function ProductCardList({ product }: { product: any }) {
+  const { addItem } = useCart();
+  const price = Number(product.price);
+  const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
+  const discount = comparePrice && comparePrice > price
+    ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
+    : null;
+  const primaryImage = product.images?.[0]?.url;
+
   return (
-    <Link href={product.href} className={styles["product-card-list"]} id={`listing-list-${product.id}`}>
+    <Link href={`/products/${product.slug}`} className={styles["product-card-list"]} id={`listing-list-${product.id}`}>
       <div className={styles["product-card-list__image"]}>
-        <div className={styles["product-card-list__image-placeholder"]}>📦</div>
+        {primaryImage ? (
+          <img src={primaryImage} alt={product.name} className={styles["product-card-list__img"]} />
+        ) : (
+          <div className={styles["product-card-list__image-placeholder"]}>📦</div>
+        )}
       </div>
       <div className={styles["product-card-list__body"]}>
-        <span className={`${styles["product-card-list__status"]} ${product.inStock ? styles["product-card-list__status--in-stock"] : styles["product-card-list__status--out-of-stock"]}`}>
-          {product.inStock ? "In Stock" : "Out of Stock"}
+        <span className={`${styles["product-card-list__status"]} ${product.stock > 0 ? styles["product-card-list__status--in-stock"] : styles["product-card-list__status--out-of-stock"]}`}>
+          {product.stock > 0 ? "In Stock" : "Out of Stock"}
         </span>
-        <span className={styles["product-card-list__brand"]}>{product.brand}</span>
+        <span className={styles["product-card-list__brand"]}>{product.brand?.name}</span>
         <span className={styles["product-card-list__name"]}>{product.name}</span>
-        {product.description && <span className={styles["product-card-list__desc"]}>{product.description}</span>}
+        {product.shortDescription && <span className={styles["product-card-list__desc"]}>{product.shortDescription}</span>}
         <div className={styles["product-card-list__footer"]}>
           <div className={styles["product-card-list__pricing"]}>
-            <span className={styles["product-card-list__price"]}>{product.price}</span>
-            {product.originalPrice && <span className={styles["product-card-list__price-original"]}>{product.originalPrice}</span>}
-            {product.discount && <span className={styles["product-card-list__discount"]}>{product.discount}</span>}
+            <span className={styles["product-card-list__price"]}>৳{price.toLocaleString("en-BD")}</span>
+            {comparePrice && <span className={styles["product-card-list__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
+            {discount && <span className={styles["product-card-list__discount"]}>{discount}</span>}
           </div>
-          <button className="btn btn--primary btn--sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+          <button
+            className="btn btn--primary btn--sm"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              try {
+                await addItem(product.id, 1);
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+          >
             Add to Cart
           </button>
         </div>
@@ -152,6 +171,20 @@ function ProductCardList({ product }: { product: Product }) {
 }
 
 /* ── Filter Sidebar Content ── */
+interface FilterContentProps {
+  selectedBrands: string[];
+  toggleBrand: (b: string) => void;
+  selectedCategories: string[];
+  toggleCategory: (c: string) => void;
+  availabilityFilter: string;
+  setAvailabilityFilter: (v: string) => void;
+  priceMin: string;
+  setPriceMin: (v: string) => void;
+  priceMax: string;
+  setPriceMax: (v: string) => void;
+  allCategories?: any[];
+}
+
 function FilterContent({
   selectedBrands,
   toggleBrand,
@@ -163,18 +196,8 @@ function FilterContent({
   setPriceMin,
   priceMax,
   setPriceMax,
-}: {
-  selectedBrands: string[];
-  toggleBrand: (b: string) => void;
-  selectedCategories: string[];
-  toggleCategory: (c: string) => void;
-  availabilityFilter: string;
-  setAvailabilityFilter: (v: string) => void;
-  priceMin: string;
-  setPriceMin: (v: string) => void;
-  priceMax: string;
-  setPriceMax: (v: string) => void;
-}) {
+  allCategories = [],
+}: FilterContentProps) {
   return (
     <>
       {/* Availability */}
@@ -224,17 +247,17 @@ function FilterContent({
       <div className={styles["filter-group"]}>
         <div className={styles["filter-group__title"]}>Category</div>
         <div className={styles["filter-group__options"]}>
-          {categoryList.map((cat) => (
-            <label key={cat} className={styles["filter-option"]}>
+          {allCategories.map((cat: any) => (
+            <label key={cat.slug} className={styles["filter-option"]}>
               <input
                 type="checkbox"
-                checked={selectedCategories.includes(cat)}
-                onChange={() => toggleCategory(cat)}
+                checked={selectedCategories.includes(cat.slug)}
+                onChange={() => toggleCategory(cat.slug)}
                 className={styles["filter-option__checkbox"]}
               />
-              {cat}
+              {cat.name}
               <span className={styles["filter-option__count"]}>
-                {allProducts.filter((p) => p.category === cat).length}
+                {cat._count?.products ?? ""}
               </span>
             </label>
           ))}
@@ -245,7 +268,7 @@ function FilterContent({
       <div className={styles["filter-group"]}>
         <div className={styles["filter-group__title"]}>Brand</div>
         <div className={styles["filter-group__options"]}>
-          {brands.map((brand) => (
+          {mockBrands.map((brand) => (
             <label key={brand} className={styles["filter-option"]}>
               <input
                 type="checkbox"
@@ -254,9 +277,6 @@ function FilterContent({
                 className={styles["filter-option__checkbox"]}
               />
               {brand}
-              <span className={styles["filter-option__count"]}>
-                {allProducts.filter((p) => p.brand === brand).length}
-              </span>
             </label>
           ))}
         </div>
@@ -267,6 +287,12 @@ function FilterContent({
 
 /* ── Products Page ── */
 export default function ProductsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("newest");
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -276,38 +302,86 @@ export default function ProductsPage() {
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  // Initialize filters from searchParams
+  useEffect(() => {
+    const catParam = searchParams.get("category");
+    if (catParam) {
+      setSelectedCategories([catParam]);
+    }
+  }, [searchParams]);
+
+  // Load categories and products
+  useEffect(() => {
+    async function loadFilters() {
+      try {
+        const res = await fetch("http://localhost:4000/api/categories").then((r) => r.json());
+        if (res && res.categories) {
+          setCategories(res.categories);
+        }
+      } catch (err) {
+        console.error("Failed to load categories filter list", err);
+      }
+    }
+    loadFilters();
+  }, []);
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setLoading(true);
+        const searchVal = searchParams.get("q") || searchParams.get("search") || undefined;
+        const catVal = selectedCategories.join(",") || undefined;
+        const brandVal = selectedBrands.join(",") || undefined;
+
+        const filters: any = {
+          page: currentPage,
+          limit: 12,
+          sort: sortBy,
+          category: catVal,
+          brand: brandVal,
+          search: searchVal,
+          minPrice: priceMin ? Number(priceMin) : undefined,
+          maxPrice: priceMax ? Number(priceMax) : undefined,
+          inStock: availabilityFilter === "in-stock" ? true : availabilityFilter === "out-of-stock" ? false : undefined,
+        };
+
+        const res = await productApi.list(filters);
+        if (res && res.products) {
+          setProducts(res.products);
+          setTotalPages(res.pagination.totalPages);
+          setTotalProducts(res.pagination.total);
+        } else {
+          setProducts(mockFallbackProducts);
+        }
+      } catch (err) {
+        console.error("Failed to fetch products list from API, using fallback list", err);
+        setProducts(mockFallbackProducts);
+        setTotalProducts(mockFallbackProducts.length);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProducts();
+  }, [currentPage, sortBy, selectedBrands, selectedCategories, availabilityFilter, priceMin, priceMax, searchParams]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+      prev.includes(brand) ? prev.filter((b: string) => b !== brand) : [...prev, brand]
     );
+    setCurrentPage(1);
   };
 
   const toggleCategory = (cat: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+      prev.includes(cat) ? prev.filter((c: string) => c !== cat) : [...prev, cat]
     );
+    setCurrentPage(1);
   };
-
-  // Apply filters
-  let filteredProducts = allProducts.filter((p) => {
-    if (availabilityFilter === "in-stock" && !p.inStock) return false;
-    if (availabilityFilter === "out-of-stock" && p.inStock) return false;
-    if (selectedBrands.length > 0 && !selectedBrands.includes(p.brand)) return false;
-    if (selectedCategories.length > 0 && !selectedCategories.includes(p.category)) return false;
-    return true;
-  });
-
-  // Sort
-  if (sortBy === "price-low") {
-    filteredProducts = [...filteredProducts].sort(
-      (a, b) => parseInt(a.price.replace(/[^\d]/g, "")) - parseInt(b.price.replace(/[^\d]/g, ""))
-    );
-  } else if (sortBy === "price-high") {
-    filteredProducts = [...filteredProducts].sort(
-      (a, b) => parseInt(b.price.replace(/[^\d]/g, "")) - parseInt(a.price.replace(/[^\d]/g, ""))
-    );
-  }
 
   const activeFilterCount = selectedBrands.length + selectedCategories.length + (availabilityFilter !== "all" ? 1 : 0);
 
@@ -317,6 +391,7 @@ export default function ProductsPage() {
     setAvailabilityFilter("all");
     setPriceMin("");
     setPriceMax("");
+    setCurrentPage(1);
   };
 
   const filterProps = {
@@ -325,6 +400,7 @@ export default function ProductsPage() {
     availabilityFilter, setAvailabilityFilter,
     priceMin, setPriceMin,
     priceMax, setPriceMax,
+    allCategories: categories,
   };
 
   return (
@@ -341,9 +417,11 @@ export default function ProductsPage() {
 
       {/* Page Header */}
       <div className={styles["listing-page__header"]}>
-        <h1 className={styles["listing-page__title"]}>All Products</h1>
+        <h1 className={styles["listing-page__title"]}>
+          {searchParams.get("q") ? `Search Results for "${searchParams.get("q")}"` : "All Products"}
+        </h1>
         <span className={styles["listing-page__count"]}>
-          {filteredProducts.length} products
+          {totalProducts} products
         </span>
       </div>
 
@@ -405,8 +483,6 @@ export default function ProductsPage() {
               <option value="newest">Newest</option>
               <option value="price-low">Price: Low → High</option>
               <option value="price-high">Price: High → Low</option>
-              <option value="best-selling">Best Selling</option>
-              <option value="top-rated">Top Rated</option>
             </select>
           </div>
           <button
@@ -435,7 +511,11 @@ export default function ProductsPage() {
 
         {/* Product Grid/List */}
         <div className={styles["listing-grid"]}>
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "var(--space-12)", color: "var(--color-text-tertiary)", fontFamily: "var(--font-data)" }}>
+              Loading products...
+            </div>
+          ) : products.length === 0 ? (
             <div className={styles["listing-empty"]}>
               <div className={styles["listing-empty__icon"]}>🔍</div>
               <h3 className={styles["listing-empty__title"]}>No products found</h3>
@@ -444,7 +524,7 @@ export default function ProductsPage() {
             </div>
           ) : (
             <div className={`${styles["listing-grid__products"]} ${viewMode === "list" ? styles["listing-grid__products--list"] : ""}`}>
-              {filteredProducts.map((product) =>
+              {products.map((product) =>
                 viewMode === "grid" ? (
                   <ProductCardGrid key={product.id} product={product} />
                 ) : (
@@ -455,23 +535,24 @@ export default function ProductsPage() {
           )}
 
           {/* Pagination */}
-          {filteredProducts.length > 0 && (
+          {!loading && totalPages > 1 && (
             <div className={styles.pagination}>
               <button className={styles.pagination__btn} disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
                 <ChevronLeftIcon />
               </button>
-              {[1, 2, 3].map((page) => (
-                <button
-                  key={page}
-                  className={`${styles.pagination__btn} ${currentPage === page ? styles["pagination__btn--active"] : ""}`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ))}
-              <span className={styles.pagination__ellipsis}>…</span>
-              <button className={styles.pagination__btn} onClick={() => setCurrentPage(8)}>8</button>
-              <button className={styles.pagination__btn} disabled={currentPage === 8} onClick={() => setCurrentPage((p) => p + 1)}>
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const page = i + 1;
+                return (
+                  <button
+                    key={page}
+                    className={`${styles.pagination__btn} ${currentPage === page ? styles["pagination__btn--active"] : ""}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+              <button className={styles.pagination__btn} disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
                 <ChevronRightIcon />
               </button>
             </div>
@@ -496,7 +577,7 @@ export default function ProductsPage() {
         <div className={styles["filter-drawer__footer"]}>
           <button className="btn btn--secondary btn--block" onClick={clearAllFilters}>Clear All</button>
           <button className="btn btn--primary btn--block" onClick={() => setFilterDrawerOpen(false)}>
-            Show {filteredProducts.length} Results
+            Show {totalProducts} Results
           </button>
         </div>
       </div>

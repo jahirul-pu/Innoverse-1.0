@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import { useAuth } from "@/components/providers/AuthContext";
+import { useCart } from "@/components/providers/CartContext";
 import styles from "./Header.module.css";
 
 /* ── SVG Icon Components ── */
@@ -117,12 +119,15 @@ const categories = [
 export default function Header() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+  const { items: cartItems } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileSearchQuery, setMobileSearchQuery] = useState("");
-  const [cartCount] = useState(0); // Will connect to cart state later
   const headerRef = useRef<HTMLElement>(null);
+
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   // Sticky header scroll detection
   useEffect(() => {
@@ -228,7 +233,7 @@ export default function Header() {
 
             {/* Account */}
             <Link
-              href="/account"
+              href={user ? "/account" : "/auth"}
               className={styles["header__action-btn"]}
               aria-label="Account"
               id="header-account"
@@ -357,9 +362,15 @@ export default function Header() {
           <button className="btn btn--secondary btn--block" onClick={toggleTheme}>
             {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
           </button>
-          <Link href="/account" className="btn btn--primary btn--block" onClick={() => setMobileNavOpen(false)}>
-            Sign In / Register
-          </Link>
+          {user ? (
+            <Link href="/account" className="btn btn--secondary btn--block" onClick={() => setMobileNavOpen(false)}>
+              👤 My Account
+            </Link>
+          ) : (
+            <Link href="/auth" className="btn btn--primary btn--block" onClick={() => setMobileNavOpen(false)}>
+              Sign In / Register
+            </Link>
+          )}
         </div>
       </nav>
     </>

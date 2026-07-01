@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AuthContextProvider } from "@/components/providers/AuthContext";
+import { CartContextProvider } from "@/components/providers/CartContext";
 
 export const metadata: Metadata = {
   title: "Innoverse Technologies — Gadgets & Electronics",
@@ -34,7 +36,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthContextProvider>
+            <CartContextProvider>
+              {children}
+            </CartContextProvider>
+          </AuthContextProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

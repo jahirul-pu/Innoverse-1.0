@@ -4,8 +4,22 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import styles from "./Home.module.css";
 
+import { useCart } from "@/components/providers/CartContext";
+import { productApi, categoryApi } from "@/lib/api";
+
+export interface APIProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number | string;
+  compareAtPrice?: number | string | null;
+  stock: number;
+  brand: { name: string; slug: string };
+  images: { url: string; alt?: string | null }[];
+}
+
 /* ── Mock Data ── */
-const heroSlides = [
+const mockHeroSlides = [
   {
     id: 1,
     overline: "New Arrival",
@@ -47,50 +61,29 @@ const heroSlides = [
   },
 ];
 
-const categoryTiles = [
+const mockCategoryTiles = [
   { name: "Audio", icon: "🎧", href: "/category/audio", count: "42 products" },
   { name: "Smart Home", icon: "🏠", href: "/category/smart-home", count: "28 products" },
   { name: "Wearables", icon: "⌚", href: "/category/wearables", count: "19 products" },
   { name: "Accessories", icon: "🔌", href: "/category/accessories", count: "65 products" },
   { name: "Cameras", icon: "📷", href: "/category/cameras", count: "12 products" },
-  { name: "Gaming", icon: "🎮", href: "/category/gaming", count: "31 products" },
 ];
 
-interface Product {
-  id: number;
-  name: string;
-  brand: string;
-  price: string;
-  originalPrice?: string;
-  discount?: string;
-  inStock: boolean;
-  href: string;
-  image?: string;
-}
-
-const newArrivals: Product[] = [
-  { id: 1, name: "Wireless ANC Earbuds Pro", brand: "SoundCore", price: "৳2,990", originalPrice: "৳3,450", discount: "−13%", inStock: true, href: "/products/wireless-anc-earbuds-pro" },
-  { id: 2, name: "Magnetic USB-C Cable 2m", brand: "Baseus", price: "৳490", inStock: true, href: "/products/magnetic-usb-c-cable" },
-  { id: 3, name: "Smart LED Strip 5M RGB", brand: "Govee", price: "৳1,290", originalPrice: "৳1,600", discount: "−19%", inStock: true, href: "/products/smart-led-strip" },
-  { id: 4, name: "Fitness Band 7 Pro", brand: "Amazfit", price: "৳3,490", inStock: true, href: "/products/fitness-band-7-pro" },
-  { id: 5, name: "Mini Bluetooth Speaker", brand: "JBL", price: "৳2,190", originalPrice: "৳2,500", discount: "−12%", inStock: false, href: "/products/mini-bluetooth-speaker" },
-  { id: 6, name: "65W GaN Charger", brand: "Ugreen", price: "৳1,790", inStock: true, href: "/products/65w-gan-charger" },
-  { id: 7, name: "Webcam 2K AutoFocus", brand: "Logitech", price: "৳4,990", originalPrice: "৳5,500", discount: "−9%", inStock: true, href: "/products/webcam-2k-autofocus" },
-  { id: 8, name: "Smart Plug Wi-Fi 4 Pack", brand: "TP-Link", price: "৳2,290", inStock: true, href: "/products/smart-plug-wifi" },
+const mockNewArrivals = [
+  { id: "1", name: "Wireless ANC Earbuds Pro", brand: { name: "SoundCore", slug: "soundcore" }, price: 2990, compareAtPrice: 3450, stock: 45, slug: "wireless-anc-earbuds-pro", images: [{ url: "" }] },
+  { id: "2", name: "Magnetic USB-C Cable 2m", brand: { name: "Baseus", slug: "baseus" }, price: 490, stock: 200, slug: "magnetic-usb-c-cable", images: [{ url: "" }] },
+  { id: "3", name: "Smart LED Strip 5M RGB", brand: { name: "Govee", slug: "govee" }, price: 1290, compareAtPrice: 1600, stock: 80, slug: "smart-led-strip", images: [{ url: "" }] },
+  { id: "4", name: "Fitness Band 7 Pro", brand: { name: "Amazfit", slug: "amazfit" }, price: 3490, stock: 60, slug: "fitness-band-7-pro", images: [{ url: "" }] },
 ];
 
-const deals: Product[] = [
-  { id: 9, name: "Noise Cancelling Headphones", brand: "Sony", price: "৳8,990", originalPrice: "৳12,500", discount: "−28%", inStock: true, href: "/products/nc-headphones" },
-  { id: 10, name: "Smart Watch Ultra", brand: "Amazfit", price: "৳6,490", originalPrice: "৳8,900", discount: "−27%", inStock: true, href: "/products/smart-watch-ultra" },
-  { id: 11, name: "Portable Projector Mini", brand: "XGIMI", price: "৳15,990", originalPrice: "৳19,900", discount: "−20%", inStock: true, href: "/products/portable-projector" },
-  { id: 12, name: "Mechanical Keyboard RGB", brand: "Keychron", price: "৳5,490", originalPrice: "৳6,900", discount: "−20%", inStock: false, href: "/products/mechanical-keyboard" },
+const mockDeals = [
+  { id: "9", name: "Noise Cancelling Headphones", brand: { name: "Sony", slug: "sony" }, price: 8990, compareAtPrice: 12500, stock: 18, slug: "nc-headphones", images: [{ url: "" }] },
+  { id: "10", name: "Smart Watch Ultra", brand: { name: "Amazfit", slug: "amazfit" }, price: 6490, compareAtPrice: 8900, stock: 25, slug: "smart-watch-ultra", images: [{ url: "" }] },
 ];
 
-const trending: Product[] = [
-  { id: 13, name: "TWS Gaming Earbuds", brand: "Razer", price: "৳4,990", inStock: true, href: "/products/tws-gaming-earbuds" },
-  { id: 14, name: "Desk Lamp Smart LED", brand: "Xiaomi", price: "৳2,490", originalPrice: "৳2,900", discount: "−14%", inStock: true, href: "/products/desk-lamp-smart" },
-  { id: 15, name: "Action Camera 4K", brand: "GoPro", price: "৳22,990", inStock: true, href: "/products/action-camera-4k" },
-  { id: 16, name: "USB-C Hub 7-in-1", brand: "Anker", price: "৳3,290", originalPrice: "৳3,800", discount: "−13%", inStock: true, href: "/products/usb-c-hub-7in1" },
+const mockTrending = [
+  { id: "13", name: "TWS Gaming Earbuds", brand: { name: "Razer", slug: "razer" }, price: 4990, stock: 40, slug: "tws-gaming-earbuds", images: [{ url: "" }] },
+  { id: "14", name: "Desk Lamp Smart LED", brand: { name: "Xiaomi", slug: "xiaomi" }, price: 2490, compareAtPrice: 2900, stock: 70, slug: "desk-lamp-smart", images: [{ url: "" }] },
 ];
 
 /* ── Icon Components ── */
@@ -108,20 +101,37 @@ const ArrowRightIcon = () => (
 );
 
 /* ── Product Card Component ── */
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product }: { product: any }) {
+  const { addItem } = useCart();
+  const price = Number(product.price);
+  const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
+  const discount = comparePrice && comparePrice > price
+    ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
+    : null;
+
+  const primaryImage = product.images?.[0]?.url;
+
   return (
-    <Link href={product.href} className={styles["product-card"]} id={`product-card-${product.id}`}>
+    <Link href={`/products/${product.slug}`} className={styles["product-card"]} id={`product-card-${product.id}`}>
       <div className={styles["product-card__image"]}>
-        <div className={styles["product-card__image-placeholder"]}>📦</div>
-        {product.discount && (
-          <span className={styles["product-card__discount-badge"]}>{product.discount}</span>
+        {primaryImage ? (
+          <img src={primaryImage} alt={product.name} className={styles["product-card__img"]} />
+        ) : (
+          <div className={styles["product-card__image-placeholder"]}>📦</div>
+        )}
+        {discount && (
+          <span className={styles["product-card__discount-badge"]}>{discount}</span>
         )}
         <button
           className={styles["product-card__quick-add"]}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Add to cart logic
+            try {
+              await addItem(product.id, 1);
+            } catch (err: any) {
+              console.error(err);
+            }
           }}
           aria-label={`Add ${product.name} to cart`}
         >
@@ -131,25 +141,25 @@ function ProductCard({ product }: { product: Product }) {
       <div className={styles["product-card__body"]}>
         <span
           className={`${styles["product-card__status"]} ${
-            product.inStock
+            product.stock > 0
               ? styles["product-card__status--in-stock"]
               : styles["product-card__status--out-of-stock"]
           }`}
         >
-          {product.inStock ? "In Stock" : "Out of Stock"}
+          {product.stock > 0 ? "In Stock" : "Out of Stock"}
         </span>
-        <span className={styles["product-card__brand"]}>{product.brand}</span>
+        <span className={styles["product-card__brand"]}>{product.brand?.name}</span>
         <span className={styles["product-card__name"]}>{product.name}</span>
         <div className={styles["product-card__pricing"]}>
-          <span className={styles["product-card__price"]}>{product.price}</span>
-          {product.originalPrice && (
+          <span className={styles["product-card__price"]}>৳{price.toLocaleString("en-BD")}</span>
+          {comparePrice && (
             <span className={styles["product-card__price-original"]}>
-              {product.originalPrice}
+              ৳{comparePrice.toLocaleString("en-BD")}
             </span>
           )}
-          {product.discount && (
+          {discount && (
             <span className={styles["product-card__price-discount"]}>
-              {product.discount}
+              {discount}
             </span>
           )}
         </div>
@@ -161,9 +171,14 @@ function ProductCard({ product }: { product: Product }) {
 /* ── Homepage ── */
 export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [newArrivals, setNewArrivals] = useState<any[]>([]);
+  const [deals, setDeals] = useState<any[]>([]);
+  const [trending, setTrending] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const nextSlide = useCallback(() => {
-    setActiveSlide((prev) => (prev + 1) % heroSlides.length);
+    setActiveSlide((prev) => (prev + 1) % mockHeroSlides.length);
   }, []);
 
   // Auto-rotate carousel
@@ -172,12 +187,74 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [nextSlide]);
 
+  // Load backend API data
+  useEffect(() => {
+    async function loadApiData() {
+      try {
+        const [arrivalsRes, dealsRes, trendingRes, categoriesRes] = await Promise.all([
+          productApi.list({ newArrival: true }),
+          productApi.list({ featured: true }),
+          productApi.list({ limit: 4 }),
+          categoryApi.list(),
+        ]);
+
+        if (arrivalsRes && arrivalsRes.products) {
+          setNewArrivals(arrivalsRes.products);
+        } else {
+          setNewArrivals(mockNewArrivals);
+        }
+
+        if (dealsRes && dealsRes.products) {
+          setDeals(dealsRes.products);
+        } else {
+          setDeals(mockDeals);
+        }
+
+        if (trendingRes && trendingRes.products) {
+          setTrending(trendingRes.products);
+        } else {
+          setTrending(mockTrending);
+        }
+
+        if (categoriesRes && categoriesRes.categories) {
+          // Map backend categories format to icons
+          const iconMap: Record<string, string> = {
+            audio: "🎧",
+            "smart-home": "🏠",
+            wearables: "⌚",
+            accessories: "🔌",
+            cameras: "📷",
+          };
+          const mapped = categoriesRes.categories.map((cat: any) => ({
+            name: cat.name,
+            icon: iconMap[cat.slug] || "📦",
+            href: `/products?category=${cat.slug}`,
+            count: `${cat._count?.products || 0} products`,
+          }));
+          setCategories(mapped);
+        } else {
+          setCategories(mockCategoryTiles);
+        }
+      } catch (err) {
+        console.error("Failed to load live data, using mock fallback", err);
+        setNewArrivals(mockNewArrivals);
+        setDeals(mockDeals);
+        setTrending(mockTrending);
+        setCategories(mockCategoryTiles);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadApiData();
+  }, []);
+
   return (
     <>
       {/* ── Hero Carousel ── */}
       <section className={styles.hero} id="hero-carousel">
         <div className={styles.hero__carousel}>
-          {heroSlides.map((slide, index) => (
+          {mockHeroSlides.map((slide, index) => (
             <div
               key={slide.id}
               className={`${styles.hero__slide} ${
@@ -230,7 +307,7 @@ export default function HomePage() {
 
           {/* Carousel Dots */}
           <div className={styles.hero__controls}>
-            {heroSlides.map((_, index) => (
+            {mockHeroSlides.map((_, index) => (
               <button
                 key={index}
                 className={`${styles.hero__dot} ${
@@ -273,7 +350,7 @@ export default function HomePage() {
       {/* ── Category Shortcuts ── */}
       <section className={`container ${styles.categories}`} id="category-shortcuts">
         <div className={styles.categories__grid}>
-          {categoryTiles.map((cat) => (
+          {categories.map((cat) => (
             <Link key={cat.name} href={cat.href} className={styles["category-tile"]}>
               <span className={styles["category-tile__icon"]}>{cat.icon}</span>
               <span className={styles["category-tile__name"]}>{cat.name}</span>

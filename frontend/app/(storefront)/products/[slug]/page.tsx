@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useCart } from "@/components/providers/CartContext";
+import { productApi } from "@/lib/api";
 import styles from "./ProductDetail.module.css";
 import homeStyles from "../../Home.module.css";
 
@@ -34,67 +37,113 @@ const CartPlusIcon = () => (
   </svg>
 );
 
-/* ── Mock Product Data ── */
-const product = {
+/* ── Mock Product Data Fallback ── */
+const mockFallbackProduct = {
+  id: "mock-id-1",
   name: "Wireless ANC Earbuds Pro",
-  brand: "SoundCore",
-  brandHref: "/brands/soundcore",
+  brand: { name: "SoundCore", slug: "soundcore" },
   shortDescription: "Premium active noise cancelling earbuds with 40dB ANC depth, Hi-Res audio certification, and 32-hour total battery life. IPX5 water resistant.",
-  price: "৳2,990",
-  originalPrice: "৳3,450",
-  discount: "−13%",
-  savings: "You save ৳460",
-  inStock: true,
+  price: 2990,
+  compareAtPrice: 3450,
+  stock: 45,
   sku: "SC-ANC-PRO-BK",
   colors: [
     { name: "Midnight Black", hex: "#1C1E20" },
     { name: "Arctic White", hex: "#F3F4F1" },
     { name: "Navy Blue", hex: "#2F3E63" },
   ],
-  thumbnails: [1, 2, 3, 4, 5],
+  images: [{ url: "" }, { url: "" }, { url: "" }],
   specs: [
-    ["Driver Size", "10mm dynamic"],
-    ["ANC Depth", "40dB"],
-    ["Bluetooth", "5.3"],
-    ["Codec", "LDAC, AAC, SBC"],
-    ["Battery (Buds)", "8 hours (ANC on)"],
-    ["Battery (Case)", "32 hours total"],
-    ["Water Resistance", "IPX5"],
-    ["Weight (Per Bud)", "5.2g"],
-    ["Charging", "USB-C, Wireless Qi"],
-    ["Warranty", "1 Year Official"],
-    ["Box Contents", "Earbuds, Case, USB-C cable, 3× ear tips, Quick start guide"],
+    { name: "Driver Size", value: "10mm dynamic" },
+    { name: "ANC Depth", value: "40dB" },
+    { name: "Bluetooth", value: "5.3" },
+    { name: "Codec", value: "LDAC, AAC, SBC" },
   ],
   description: `
     <p>Experience audio excellence with the SoundCore Wireless ANC Earbuds Pro. Featuring industry-leading 40dB active noise cancellation, these earbuds create a personal sound sanctuary wherever you are.</p>
-    <p>Hi-Res Audio certified with LDAC codec support, delivering studio-quality wireless audio at up to 990kbps. The custom 10mm dynamic drivers produce rich, detailed sound across the entire frequency range.</p>
-    <p>With 8 hours of playback on a single charge (ANC on) and 32 hours total with the charging case, you'll have enough power for even the longest days. IPX5 water resistance means they're built for workouts and rainy commutes alike.</p>
-    <p>The ergonomic design and three sizes of silicone ear tips ensure a secure, comfortable fit. Touch controls on each earbud give you effortless control over music, calls, and noise cancellation modes.</p>
   `,
   reviews: [
-    { id: 1, author: "Rahim A.", date: "Jun 2026", rating: 5, text: "Incredible ANC for the price. Bass is punchy, mids are clear. Battery lasts me 2 full days. Best purchase I've made this year.", verified: true },
-    { id: 2, author: "Nusrat K.", date: "Jun 2026", rating: 4, text: "Sound quality is fantastic. ANC works well in the bus. Only wish the case was a bit smaller. Still, great value.", verified: true },
-    { id: 3, author: "Tanvir H.", date: "May 2026", rating: 5, text: "Comparing to my old ৳8,000 earbuds, these are 90% there for a third of the price. LDAC support is the real deal.", verified: true },
+    { id: "rev-1", rating: 5, comment: "Incredible ANC for the price. Bass is punchy, mids are clear.", user: { name: "Rahim A." }, createdAt: "2026-06-25T12:00:00Z" },
   ],
   ratingAvg: 4.7,
   ratingCount: 48,
   ratingDistribution: [38, 7, 2, 1, 0],
 };
 
-const relatedProducts = [
-  { id: 5, name: "Mini Bluetooth Speaker", brand: "JBL", price: "৳2,190", originalPrice: "৳2,500", discount: "−12%", inStock: false, href: "/products/mini-bluetooth-speaker" },
-  { id: 9, name: "Noise Cancelling Headphones", brand: "Sony", price: "৳8,990", originalPrice: "৳12,500", discount: "−28%", inStock: true, href: "/products/nc-headphones" },
-  { id: 13, name: "TWS Gaming Earbuds", brand: "Razer", price: "৳4,990", inStock: true, href: "/products/tws-gaming-earbuds" },
-  { id: 2, name: "Magnetic USB-C Cable 2m", brand: "Baseus", price: "৳490", inStock: true, href: "/products/magnetic-usb-c-cable" },
+const mockRelatedProducts = [
+  { id: "5", name: "Mini Bluetooth Speaker", brand: { name: "JBL" }, price: 2190, compareAtPrice: 2500, stock: 0, slug: "mini-bluetooth-speaker", images: [{ url: "" }] },
+  { id: "9", name: "Noise Cancelling Headphones", brand: { name: "Sony" }, price: 8990, compareAtPrice: 12500, stock: 18, slug: "nc-headphones", images: [{ url: "" }] },
 ];
 
 export default function ProductDetailPage() {
+  const params = useParams();
+  const slug = params.slug as string;
+  const { addItem } = useCart();
+
+  const [product, setProduct] = useState<any>(null);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedThumbnail, setSelectedThumbnail] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "specs" | "reviews">("description");
 
-  const stars = (rating: number) => "★".repeat(rating) + "☆".repeat(5 - rating);
+  // Load product details from API
+  useEffect(() => {
+    async function loadProductData() {
+      if (!slug) return;
+      try {
+        setLoading(true);
+        const res = await productApi.getBySlug(slug);
+        if (res && res.product) {
+          setProduct(res.product);
+          if (res.relatedProducts) {
+            setRelatedProducts(res.relatedProducts);
+          } else {
+            setRelatedProducts(mockRelatedProducts);
+          }
+        } else {
+          setProduct(mockFallbackProduct);
+          setRelatedProducts(mockRelatedProducts);
+        }
+      } catch (err) {
+        console.error("Failed to load product details from API, using fallback", err);
+        setProduct(mockFallbackProduct);
+        setRelatedProducts(mockRelatedProducts);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProductData();
+  }, [slug]);
+
+  const stars = (rating: number) => "★".repeat(Math.round(rating)) + "☆".repeat(5 - Math.round(rating));
+
+  if (loading) {
+    return (
+      <div className="container" style={{ textAlign: "center", padding: "var(--space-20)", fontFamily: "var(--font-data)", color: "var(--color-text-tertiary)" }}>
+        Loading product details...
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="container" style={{ textAlign: "center", padding: "var(--space-20)" }}>
+        <h2>Product not found</h2>
+        <Link href="/products" className="btn btn--primary" style={{ marginTop: "var(--space-4)" }}>Browse All Products</Link>
+      </div>
+    );
+  }
+
+  const price = Number(product.price) || 0;
+  const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
+  const discount = comparePrice && comparePrice > price
+    ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
+    : null;
+  const savings = comparePrice && comparePrice > price ? `You save ৳${(comparePrice - price).toLocaleString("en-BD")}` : null;
+
+  const currentImage = product.images?.[selectedThumbnail]?.url || "";
 
   return (
     <div className={`container ${styles.pdp}`}>
@@ -102,7 +151,9 @@ export default function ProductDetailPage() {
       <ul className={styles.pdp__breadcrumb}>
         <li><Link href="/">Home</Link></li>
         <li><Link href="/products">Products</Link></li>
-        <li><Link href="/category/audio">Audio</Link></li>
+        {product.category && (
+          <li><Link href={`/products?category=${product.category.slug}`}>{product.category.name}</Link></li>
+        )}
         <li><span style={{ color: "var(--color-text-secondary)", fontWeight: 500 }}>{product.name}</span></li>
       </ul>
 
@@ -111,17 +162,25 @@ export default function ProductDetailPage() {
         {/* Gallery */}
         <div className={styles.pdp__gallery}>
           <div className={styles["pdp__main-image"]} id="pdp-main-image">
-            <div className={styles["pdp__main-image-placeholder"]}>🎧</div>
+            {currentImage ? (
+              <img src={currentImage} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            ) : (
+              <div className={styles["pdp__main-image-placeholder"]}>📦</div>
+            )}
           </div>
           <div className={styles.pdp__thumbnails}>
-            {product.thumbnails.map((_, i) => (
+            {product.images?.map((img: any, i: number) => (
               <button
                 key={i}
                 className={`${styles.pdp__thumbnail} ${i === selectedThumbnail ? styles["pdp__thumbnail--active"] : ""}`}
                 onClick={() => setSelectedThumbnail(i)}
                 aria-label={`View image ${i + 1}`}
               >
-                <div className={styles["pdp__thumbnail-placeholder"]}>🎧</div>
+                {img.url ? (
+                  <img src={img.url} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                ) : (
+                  <div className={styles["pdp__thumbnail-placeholder"]}>📦</div>
+                )}
               </button>
             ))}
           </div>
@@ -130,12 +189,14 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div className={styles.pdp__info}>
           {/* Status */}
-          <span className={`${styles.pdp__status} ${product.inStock ? styles["pdp__status--in-stock"] : styles["pdp__status--out-of-stock"]}`}>
-            {product.inStock ? "In Stock" : "Out of Stock"}
+          <span className={`${styles.pdp__status} ${product.stock > 0 ? styles["pdp__status--in-stock"] : styles["pdp__status--out-of-stock"]}`}>
+            {product.stock > 0 ? "In Stock" : "Out of Stock"}
           </span>
 
           {/* Brand */}
-          <Link href={product.brandHref} className={styles.pdp__brand}>{product.brand}</Link>
+          {product.brand && (
+            <Link href={`/products?brand=${product.brand.slug}`} className={styles.pdp__brand}>{product.brand.name}</Link>
+          )}
 
           {/* Name */}
           <h1 className={styles.pdp__name}>{product.name}</h1>
@@ -145,12 +206,12 @@ export default function ProductDetailPage() {
 
           {/* Rating */}
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-            <span style={{ color: "var(--color-signal-amber)", fontSize: "var(--text-sm)" }}>{stars(Math.round(product.ratingAvg))}</span>
+            <span style={{ color: "var(--color-signal-amber)", fontSize: "var(--text-sm)" }}>{stars(product.ratingAvg || 5)}</span>
             <span className="data-text" style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)" }}>
-              {product.ratingAvg}
+              {product.ratingAvg || "5.0"}
             </span>
             <span style={{ fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>
-              ({product.ratingCount} reviews)
+              ({product.ratingCount || 0} reviews)
             </span>
           </div>
 
@@ -161,32 +222,34 @@ export default function ProductDetailPage() {
 
           {/* Pricing */}
           <div className={styles.pdp__pricing}>
-            <span className={styles.pdp__price}>{product.price}</span>
-            <span className={styles["pdp__price-original"]}>{product.originalPrice}</span>
-            <span className={styles["pdp__price-discount"]}>{product.discount}</span>
-            <span className={styles["pdp__price-savings"]}>{product.savings}</span>
+            <span className={styles.pdp__price}>৳{price.toLocaleString("en-BD")}</span>
+            {comparePrice && <span className={styles["pdp__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
+            {discount && <span className={styles["pdp__price-discount"]}>{discount}</span>}
+            {savings && <span className={styles["pdp__price-savings"]}>{savings}</span>}
           </div>
 
-          {/* Color Variants */}
-          <div className={styles.pdp__variants}>
-            <div className={styles["pdp__variant-group"]}>
-              <span className={styles["pdp__variant-label"]}>
-                Color: <span>{product.colors[selectedColor].name}</span>
-              </span>
-              <div className={styles["pdp__variant-options"]}>
-                {product.colors.map((color, i) => (
-                  <button
-                    key={color.name}
-                    className={`${styles["pdp__color-btn"]} ${i === selectedColor ? styles["pdp__color-btn--active"] : ""}`}
-                    style={{ backgroundColor: color.hex }}
-                    onClick={() => setSelectedColor(i)}
-                    aria-label={color.name}
-                    title={color.name}
-                  />
-                ))}
+          {/* Color Variants (if any) */}
+          {product.colors && product.colors.length > 0 && (
+            <div className={styles.pdp__variants}>
+              <div className={styles["pdp__variant-group"]}>
+                <span className={styles["pdp__variant-label"]}>
+                  Color: <span>{product.colors[selectedColor]?.name}</span>
+                </span>
+                <div className={styles["pdp__variant-options"]}>
+                  {product.colors.map((color: any, i: number) => (
+                    <button
+                      key={color.name}
+                      className={`${styles["pdp__color-btn"]} ${i === selectedColor ? styles["pdp__color-btn--active"] : ""}`}
+                      style={{ backgroundColor: color.hex }}
+                      onClick={() => setSelectedColor(i)}
+                      aria-label={color.name}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Quantity */}
           <div className={styles.pdp__quantity}>
@@ -211,17 +274,33 @@ export default function ProductDetailPage() {
 
           {/* Action Buttons */}
           <div className={styles.pdp__actions}>
-            <button className={`btn btn--primary btn--lg ${styles["pdp__add-to-cart"]}`} id="add-to-cart-btn">
+            <button
+              className={`btn btn--primary btn--lg ${styles["pdp__add-to-cart"]}`}
+              id="add-to-cart-btn"
+              onClick={async () => {
+                try {
+                  await addItem(product.id, quantity);
+                  alert("Added to cart!");
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+            >
               <CartPlusIcon /> Add to Cart
             </button>
-            <button className={`btn btn--lg ${styles["pdp__buy-now"]}`} id="buy-now-btn">
+            <button
+              className={`btn btn--lg ${styles["pdp__buy-now"]}`}
+              id="buy-now-btn"
+              onClick={async () => {
+                try {
+                  await addItem(product.id, quantity);
+                  window.location.href = "/checkout";
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+            >
               Buy Now
-            </button>
-            <button className={styles["pdp__wishlist-btn"]} aria-label="Add to wishlist" id="wishlist-btn">
-              <HeartIcon />
-            </button>
-            <button className={styles["pdp__share-btn"]} aria-label="Share product" id="share-btn">
-              <ShareIcon />
             </button>
           </div>
 
@@ -255,7 +334,7 @@ export default function ProductDetailPage() {
               role="tab"
               aria-selected={activeTab === tab}
             >
-              {tab === "description" ? "Description" : tab === "specs" ? "Specifications" : `Reviews (${product.ratingCount})`}
+              {tab === "description" ? "Description" : tab === "specs" ? "Specifications" : `Reviews (${product.ratingCount || 0})`}
             </button>
           ))}
         </ul>
@@ -268,10 +347,10 @@ export default function ProductDetailPage() {
           {activeTab === "specs" && (
             <table className={styles["specs-table"]}>
               <tbody>
-                {product.specs.map(([key, value]) => (
-                  <tr key={key}>
-                    <td>{key}</td>
-                    <td>{value}</td>
+                {product.specs?.map((spec: any) => (
+                  <tr key={spec.name}>
+                    <td>{spec.name}</td>
+                    <td>{spec.value}</td>
                   </tr>
                 ))}
               </tbody>
@@ -283,9 +362,9 @@ export default function ProductDetailPage() {
               {/* Rating Summary */}
               <div className={styles.reviews__summary}>
                 <div className={styles.reviews__average}>
-                  <div className={styles["reviews__average-score"]}>{product.ratingAvg}</div>
-                  <div className={styles["reviews__average-stars"]}>{stars(Math.round(product.ratingAvg))}</div>
-                  <div className={styles["reviews__average-count"]}>{product.ratingCount} reviews</div>
+                  <div className={styles["reviews__average-score"]}>{product.ratingAvg || "5.0"}</div>
+                  <div className={styles["reviews__average-stars"]}>{stars(product.ratingAvg || 5)}</div>
+                  <div className={styles["reviews__average-count"]}>{product.ratingCount || 0} reviews</div>
                 </div>
                 <div className={styles.reviews__bars}>
                   {[5, 4, 3, 2, 1].map((star, i) => (
@@ -294,60 +373,78 @@ export default function ProductDetailPage() {
                       <div className={styles.reviews__bar}>
                         <div
                           className={styles["reviews__bar-fill"]}
-                          style={{ width: `${(product.ratingDistribution[i] / product.ratingCount) * 100}%` }}
+                          style={{ width: `${product.ratingCount ? ((product.ratingDistribution?.[i] || 0) / product.ratingCount) * 100 : 0}%` }}
                         />
                       </div>
-                      <span className={styles["reviews__bar-count"]}>{product.ratingDistribution[i]}</span>
+                      <span className={styles["reviews__bar-count"]}>{product.ratingDistribution?.[i] || 0}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Individual Reviews */}
-              {product.reviews.map((review) => (
-                <div key={review.id} className={styles["review-card"]}>
-                  <div className={styles["review-card__header"]}>
-                    <span className={styles["review-card__author"]}>{review.author}</span>
-                    <span className={styles["review-card__date"]}>{review.date}</span>
+              {product.reviews && product.reviews.length > 0 ? (
+                product.reviews.map((review: any) => (
+                  <div key={review.id} className={styles["review-card"]}>
+                    <div className={styles["review-card__header"]}>
+                      <span className={styles["review-card__author"]}>{review.user?.name || "Anonymous"}</span>
+                      <span className={styles["review-card__date"]}>{new Date(review.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className={styles["review-card__stars"]}>{stars(review.rating)}</div>
+                    <p className={styles["review-card__text"]}>{review.comment}</p>
                   </div>
-                  <div className={styles["review-card__stars"]}>{stars(review.rating)}</div>
-                  {review.verified && (
-                    <div className={styles["review-card__verified"]}>✓ Verified Purchase</div>
-                  )}
-                  <p className={styles["review-card__text"]}>{review.text}</p>
+                ))
+              ) : (
+                <div style={{ padding: "var(--space-6)", textAlign: "center", color: "var(--color-text-tertiary)" }}>
+                  No reviews yet for this product.
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
       </div>
 
       {/* Related Products */}
-      <div className={styles.pdp__related}>
-        <h2 className={styles["pdp__related-title"]}>You May Also Like</h2>
-        <div className={styles["pdp__related-grid"]}>
-          {relatedProducts.map((p) => (
-            <Link key={p.id} href={p.href} className={homeStyles["product-card"]}>
-              <div className={homeStyles["product-card__image"]}>
-                <div className={homeStyles["product-card__image-placeholder"]}>📦</div>
-                {p.discount && <span className={homeStyles["product-card__discount-badge"]}>{p.discount}</span>}
-              </div>
-              <div className={homeStyles["product-card__body"]}>
-                <span className={`${homeStyles["product-card__status"]} ${p.inStock ? homeStyles["product-card__status--in-stock"] : homeStyles["product-card__status--out-of-stock"]}`}>
-                  {p.inStock ? "In Stock" : "Out of Stock"}
-                </span>
-                <span className={homeStyles["product-card__brand"]}>{p.brand}</span>
-                <span className={homeStyles["product-card__name"]}>{p.name}</span>
-                <div className={homeStyles["product-card__pricing"]}>
-                  <span className={homeStyles["product-card__price"]}>{p.price}</span>
-                  {p.originalPrice && <span className={homeStyles["product-card__price-original"]}>{p.originalPrice}</span>}
-                  {p.discount && <span className={homeStyles["product-card__price-discount"]}>{p.discount}</span>}
-                </div>
-              </div>
-            </Link>
-          ))}
+      {relatedProducts.length > 0 && (
+        <div className={styles.pdp__related}>
+          <h2 className={styles["pdp__related-title"]}>You May Also Like</h2>
+          <div className={styles["pdp__related-grid"]}>
+            {relatedProducts.map((p) => {
+              const rPrice = Number(p.price) || 0;
+              const rCompare = p.compareAtPrice ? Number(p.compareAtPrice) : null;
+              const rDiscount = rCompare && rCompare > rPrice
+                ? `−${Math.round(((rCompare - rPrice) / rCompare) * 100)}%`
+                : null;
+              const rImage = p.images?.[0]?.url || "";
+
+              return (
+                <Link key={p.id} href={`/products/${p.slug}`} className={homeStyles["product-card"]}>
+                  <div className={homeStyles["product-card__image"]}>
+                    {rImage ? (
+                      <img src={rImage} alt={p.name} className={homeStyles["product-card__img"]} />
+                    ) : (
+                      <div className={homeStyles["product-card__image-placeholder"]}>📦</div>
+                    )}
+                    {rDiscount && <span className={homeStyles["product-card__discount-badge"]}>{rDiscount}</span>}
+                  </div>
+                  <div className={homeStyles["product-card__body"]}>
+                    <span className={`${homeStyles["product-card__status"]} ${p.stock > 0 ? homeStyles["product-card__status--in-stock"] : homeStyles["product-card__status--out-of-stock"]}`}>
+                      {p.stock > 0 ? "In Stock" : "Out of Stock"}
+                    </span>
+                    <span className={homeStyles["product-card__brand"]}>{p.brand?.name}</span>
+                    <span className={homeStyles["product-card__name"]}>{p.name}</span>
+                    <div className={homeStyles["product-card__pricing"]}>
+                      <span className={homeStyles["product-card__price"]}>৳{rPrice.toLocaleString("en-BD")}</span>
+                      {rCompare && <span className={homeStyles["product-card__price-original"]}>৳{rCompare.toLocaleString("en-BD")}</span>}
+                      {rDiscount && <span className={homeStyles["product-card__price-discount"]}>{rDiscount}</span>}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -2,18 +2,37 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthContext";
 import styles from "./Auth.module.css";
 
 type AuthView = "login" | "register" | "otp";
 
 export default function AuthPage() {
+  const router = useRouter();
+  const { user, sendOtp, verifyOtp } = useAuth();
+
   const [view, setView] = useState<AuthView>("login");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [otpTimer, setOtpTimer] = useState(120);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (user) {
+      if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
+    }
+  }, [user, router]);
 
   // OTP countdown
   useEffect(() => {
@@ -40,10 +59,57 @@ export default function AuthPage() {
     }
   }, [otp]);
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setOtpTimer(120);
-    setView("otp");
+    setLocalError(null);
+    if (phone.length < 10) {
+      setLocalError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    const formattedPhone = "0" + phone;
+    setLoading(true);
+
+    try {
+      if (view === "register") {
+        if (!name.trim()) {
+          setLocalError("Name is required.");
+          setLoading(false);
+          return;
+        }
+        await sendOtp(formattedPhone, name, email || undefined);
+      } else {
+        await sendOtp(formattedPhone);
+      }
+      setOtpTimer(120);
+      setView("otp");
+    } catch (err: any) {
+      setLocalError(err.message || "Failed to request OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError(null);
+    const code = otp.join("");
+    if (code.length < 6) {
+      setLocalError("Please enter the complete 6-digit OTP code.");
+      return;
+    }
+
+    const formattedPhone = "0" + phone;
+    setLoading(true);
+
+    try {
+      await verifyOtp(formattedPhone, code);
+      // redirect handled by useEffect
+    } catch (err: any) {
+      setLocalError(err.message || "Invalid or expired OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -85,9 +151,23 @@ export default function AuthPage() {
           )}
         </div>
 
+        {localError && (
+          <div style={{
+            color: "#ff4d4d",
+            backgroundColor: "rgba(255, 77, 77, 0.1)",
+            padding: "var(--space-3)",
+            borderRadius: "var(--border-radius-md)",
+            fontSize: "var(--text-sm)",
+            marginBottom: "var(--space-4)",
+            border: "1px solid rgba(255, 77, 77, 0.2)"
+          }}>
+            {localError}
+          </div>
+        )}
+
         {/* OTP View */}
         {view === "otp" && (
-          <form className={styles["auth-form"]} onSubmit={(e) => e.preventDefault()}>
+          <form className={styles["auth-form"]} onSubmit={handleVerifyOtpSubmit}>
             <div className={styles["otp-container"]}>
               {otp.map((digit, i) => (
                 <input
@@ -110,20 +190,38 @@ export default function AuthPage() {
               {otpTimer > 0 ? (
                 <>Resend code in <span>{formatTime(otpTimer)}</span></>
               ) : (
-                <button className={styles["otp-resend"]} onClick={() => setOtpTimer(120)} type="button">
+                <button
+                  className={styles["otp-resend"]}
+                  onClick={async () => {
+                    try {
+                      setLocalError(null);
+                      await sendOtp("0" + phone);
+                      setOtpTimer(120);
+                    } catch (err: any) {
+                      setLocalError(err.message || "Failed to resend OTP.");
+                    }
+                  }}
+                  type="button"
+                >
                   Resend OTP
                 </button>
               )}
             </div>
 
-            <button className="btn btn--primary btn--lg btn--block" type="submit" id="verify-otp-btn">
-              Verify & Continue
+            <button
+              className="btn btn--primary btn--lg btn--block"
+              type="submit"
+              id="verify-otp-btn"
+              disabled={loading}
+            >
+              {loading ? "Verifying..." : "Verify & Continue"}
             </button>
 
             <button
               className="btn btn--secondary btn--block"
               type="button"
               onClick={() => setView("login")}
+              disabled={loading}
             >
               ← Change Phone Number
             </button>
@@ -149,7 +247,7 @@ export default function AuthPage() {
               </button>
             </div>
 
-            <form className={styles["auth-form"]} onSubmit={handleSendOtp}>
+            <form className={styles["auth-form"]} onSubmit={handleRequestOtp}>
               {/* Name (register only) */}
               {view === "register" && (
                 <div className={styles["auth-input-group"]}>
@@ -161,6 +259,7 @@ export default function AuthPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     id="auth-name"
+                    required
                   />
                 </div>
               )}
@@ -177,6 +276,7 @@ export default function AuthPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                     id="auth-phone"
+                    required
                   />
                 </div>
                 <span className={styles["auth-input-hint"]}>
@@ -202,8 +302,13 @@ export default function AuthPage() {
                 </div>
               )}
 
-              <button className="btn btn--primary btn--lg btn--block" type="submit" id="send-otp-btn">
-                {view === "login" ? "Send OTP" : "Create Account"}
+              <button
+                className="btn btn--primary btn--lg btn--block"
+                type="submit"
+                id="send-otp-btn"
+                disabled={loading}
+              >
+                {loading ? "Sending..." : view === "login" ? "Send OTP" : "Create Account"}
               </button>
 
               {view === "register" && (
@@ -222,7 +327,13 @@ export default function AuthPage() {
 
             {/* Social Login */}
             <div className={styles["auth-social"]}>
-              <button className={styles["auth-social-btn"]}>
+              <button
+                className={styles["auth-social-btn"]}
+                onClick={() => {
+                  setLocalError("Social login is stubbed. Please use Phone Number verification.");
+                }}
+                type="button"
+              >
                 <span className={styles["auth-social-btn__icon"]}>
                   <svg width="20" height="20" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
