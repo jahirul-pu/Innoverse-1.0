@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCart } from "@/components/providers/CartContext";
+import { useToast } from "@/components/providers/ToastContext";
 import { productApi } from "@/lib/api";
 import styles from "./ProductDetail.module.css";
 import homeStyles from "../../Home.module.css";
@@ -85,6 +86,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
   const { addItem } = useCart();
+  const { toast } = useToast();
 
   const [product, setProduct] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
@@ -325,7 +327,7 @@ export default function ProductDetailPage() {
                     images: product.images,
                     brand: product.brand,
                   });
-                  alert("Added to cart!");
+                  toast.success("Added to cart!");
                 } catch (err) {
                   console.error(err);
                 }

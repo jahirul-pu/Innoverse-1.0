@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthContextProvider } from "@/components/providers/AuthContext";
 import { CartContextProvider } from "@/components/providers/CartContext";
+import { ToastContextProvider } from "@/components/providers/ToastContext";
 
 export const metadata: Metadata = {
   title: "Innoverse Technologies — Gadgets & Electronics",
@@ -38,9 +39,11 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <AuthContextProvider>
-            <CartContextProvider>
-              {children}
-            </CartContextProvider>
+            <ToastContextProvider>
+              <CartContextProvider>
+                {children}
+              </CartContextProvider>
+            </ToastContextProvider>
           </AuthContextProvider>
         </ThemeProvider>
       </body>

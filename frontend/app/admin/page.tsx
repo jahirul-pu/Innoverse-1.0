@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthContext";
+import { useToast } from "@/components/providers/ToastContext";
 import { productApi } from "@/lib/api";
 import styles from "./Admin.module.css";
 import { 
@@ -73,6 +74,19 @@ function formatBDT(amount: number) {
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
+
+  const alert = (msg: any) => {
+    const str = String(msg);
+    const lower = str.toLowerCase();
+    if (lower.includes("error") || lower.includes("fail") || lower.includes("invalid") || lower.includes("wrong")) {
+      toast.error(str);
+    } else if (lower.includes("success") || lower.includes("created") || lower.includes("updated") || lower.includes("deactivated")) {
+      toast.success(str);
+    } else {
+      toast.info(str);
+    }
+  };
 
   const [activeView, setActiveView] = useState<AdminView>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/providers/ToastContext";
 import Link from "next/link";
 import { Phone, MessageSquare, Mail, Clock, MapPin, CheckCircle, ArrowRight } from "lucide-react";
 import styles from "./Contact.module.css";
 
 export default function ContactPage() {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     contactInfo: "",
@@ -19,7 +21,7 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.contactInfo || !formData.message) {
-      alert("Please fill in all required fields.");
+      toast.error("Please fill in all required fields.");
       return;
     }
 
