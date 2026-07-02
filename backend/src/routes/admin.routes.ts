@@ -78,7 +78,7 @@ const createProductSchema = z.object({
   price: z.number().positive(),
   compareAtPrice: z.number().positive().optional(),
   costPrice: z.number().positive().optional(),
-  sku: z.string(),
+  sku: z.string().trim().optional().transform(v => v === "" ? undefined : v),
   barcode: z.string().optional(),
   stock: z.number().int().min(0).default(0),
   lowStockThreshold: z.number().int().min(0).default(5),
@@ -119,7 +119,7 @@ adminRoutes.post("/products", async (req: Request, res: Response) => {
       price: data.price,
       compareAtPrice: data.compareAtPrice,
       costPrice: data.costPrice,
-      sku: data.sku,
+      sku: data.sku || null,
       barcode: data.barcode,
       stock: data.stock,
       lowStockThreshold: data.lowStockThreshold,
@@ -141,10 +141,16 @@ adminRoutes.post("/products", async (req: Request, res: Response) => {
 // PATCH /api/admin/products/:id
 adminRoutes.patch("/products/:id", async (req: Request, res: Response) => {
   const id = req.params.id as string;
+  const updateData = { ...req.body };
+  
+  if (updateData.sku !== undefined) {
+    const trimmed = typeof updateData.sku === "string" ? updateData.sku.trim() : "";
+    updateData.sku = trimmed === "" ? null : trimmed;
+  }
 
   const product = await prisma.product.update({
     where: { id },
-    data: req.body,
+    data: updateData,
   });
 
   return res.json({ product });

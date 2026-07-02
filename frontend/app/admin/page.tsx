@@ -1044,8 +1044,8 @@ export default function AdminDashboard() {
                     <input type="text" className="input" required value={prodName} onChange={(e) => setProdName(e.target.value)} />
                   </div>
                   <div className={styles["form-group"]}>
-                    <label className="label">SKU (Stock Keeping Unit)</label>
-                    <input type="text" className="input" required value={prodSku} onChange={(e) => setProdSku(e.target.value)} />
+                    <label className="label">SKU (Stock Keeping Unit, optional)</label>
+                    <input type="text" className="input" value={prodSku} onChange={(e) => setProdSku(e.target.value)} />
                   </div>
                   <div className={styles["form-group"]}>
                     <label className="label">Stock Quantity</label>
