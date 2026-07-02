@@ -31,6 +31,11 @@ export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
 
   const [activeView, setActiveView] = useState<AdminView>("dashboard");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    setSearchQuery("");
+  }, [activeView]);
 
   // Live Data States
   const [stats, setStats] = useState<any>({ totalProducts: 0, totalOrders: 0, totalCustomers: 0, totalRevenue: 0 });
@@ -487,6 +492,40 @@ export default function AdminDashboard() {
     }
   }
 
+  // Computed filtered lists based on search query
+  const filteredProducts = products.filter(p => 
+    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.brand?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.category?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredOrders = orders.filter(o => 
+    o.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    o.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    o.user?.phone?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCustomers = customers.filter(c => 
+    c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCategories = categories.filter(c => 
+    c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.slug?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredBrands = brands.filter(b => 
+    b.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.slug?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredCoupons = coupons.filter(c => 
+    c.code?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const viewTitles: Record<AdminView, string> = {
     dashboard: "Dashboard",
     products: "Products",
@@ -579,7 +618,14 @@ export default function AdminDashboard() {
           <div className={styles["admin-topbar__actions"]}>
             <div className={styles["admin-topbar__search"]}>
               🔍
-              <input type="text" placeholder="Search (stub)..." id="admin-search" />
+              <input
+                type="text"
+                placeholder={activeView === "dashboard" ? "Select a tab to search..." : `Search ${viewTitles[activeView]}...`}
+                id="admin-search"
+                disabled={activeView === "dashboard"}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
             <button className={styles["admin-topbar__icon-btn"]} aria-label="Notifications" onClick={() => alert("No notifications.")}>
               🔔
@@ -707,7 +753,7 @@ export default function AdminDashboard() {
               {activeView === "products" && (
                 <div className={styles["admin-panel"]}>
                   <div className={styles["admin-panel__header"]}>
-                    <div className={styles["admin-panel__title"]}>All Products ({products.length})</div>
+                    <div className={styles["admin-panel__title"]}>All Products ({filteredProducts.length})</div>
                     <div className={styles["admin-panel__actions"]}>
                       <button className="btn btn--primary btn--sm" onClick={openAddModal}>+ Add Product</button>
                     </div>
@@ -726,10 +772,10 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {products.length === 0 ? (
-                          <tr><td colSpan={7} style={{ textAlign: "center", padding: "var(--space-4)" }}>No products in database.</td></tr>
+                        {filteredProducts.length === 0 ? (
+                          <tr><td colSpan={7} style={{ textAlign: "center", padding: "var(--space-4)" }}>No products found.</td></tr>
                         ) : (
-                          products.map((product: any) => (
+                          filteredProducts.map((product: any) => (
                             <tr key={product.id}>
                               <td>
                                 <div className={styles["data-table__product"]}>
@@ -763,7 +809,7 @@ export default function AdminDashboard() {
               {activeView === "orders" && (
                 <div className={styles["admin-panel"]}>
                   <div className={styles["admin-panel__header"]}>
-                    <div className={styles["admin-panel__title"]}>All Orders ({orders.length})</div>
+                    <div className={styles["admin-panel__title"]}>All Orders ({filteredOrders.length})</div>
                   </div>
                   <div style={{ overflowX: "auto" }}>
                     <table className={styles["data-table"]}>
@@ -778,10 +824,10 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.length === 0 ? (
-                          <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-4)" }}>No orders placed.</td></tr>
+                        {filteredOrders.length === 0 ? (
+                          <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-4)" }}>No orders found.</td></tr>
                         ) : (
-                          orders.map((order: any) => (
+                          filteredOrders.map((order: any) => (
                             <tr key={order.id}>
                               <td className={styles["data-table__mono"]}><span className={styles["data-table__link"]}>{order.orderNumber}</span></td>
                               <td>
@@ -816,7 +862,7 @@ export default function AdminDashboard() {
               {activeView === "customers" && (
                 <div className={styles["admin-panel"]}>
                   <div className={styles["admin-panel__header"]}>
-                    <div className={styles["admin-panel__title"]}>All Customers ({customers.length})</div>
+                    <div className={styles["admin-panel__title"]}>All Customers ({filteredCustomers.length})</div>
                   </div>
                   <div style={{ overflowX: "auto" }}>
                     <table className={styles["data-table"]}>
@@ -830,10 +876,10 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {customers.length === 0 ? (
-                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>No registered customers with order history.</td></tr>
+                        {filteredCustomers.length === 0 ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>No customers found.</td></tr>
                         ) : (
-                          customers.map((cust: any) => (
+                          filteredCustomers.map((cust: any) => (
                             <tr key={cust.phone}>
                               <td>
                                 <div className={styles["data-table__product"]}>
@@ -860,7 +906,7 @@ export default function AdminDashboard() {
               {activeView === "categories" && (
                 <div className={styles["admin-panel"]}>
                   <div className={styles["admin-panel__header"]}>
-                    <div className={styles["admin-panel__title"]}>All Categories ({categories.length})</div>
+                    <div className={styles["admin-panel__title"]}>All Categories ({filteredCategories.length})</div>
                     <div className={styles["admin-panel__actions"]}>
                       <button className="btn btn--primary btn--sm" onClick={openAddCatModal}>+ Add Category</button>
                     </div>
@@ -879,10 +925,10 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {categories.length === 0 ? (
+                        {filteredCategories.length === 0 ? (
                           <tr><td colSpan={7} style={{ textAlign: "center", padding: "var(--space-4)" }}>No categories found.</td></tr>
                         ) : (
-                          categories.map((cat: any) => (
+                          filteredCategories.map((cat: any) => (
                             <tr key={cat.id}>
                               <td style={{ fontSize: "var(--text-lg)" }}>{cat.icon || "📁"}</td>
                               <td style={{ fontWeight: 500 }}>{cat.name}</td>
@@ -915,7 +961,7 @@ export default function AdminDashboard() {
               {activeView === "brands" && (
                 <div className={styles["admin-panel"]}>
                   <div className={styles["admin-panel__header"]}>
-                    <div className={styles["admin-panel__title"]}>All Brands ({brands.length})</div>
+                    <div className={styles["admin-panel__title"]}>All Brands ({filteredBrands.length})</div>
                     <div className={styles["admin-panel__actions"]}>
                       <button className="btn btn--primary btn--sm" onClick={openAddBrandModal}>+ Add Brand</button>
                     </div>
@@ -933,10 +979,10 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {brands.length === 0 ? (
+                        {filteredBrands.length === 0 ? (
                           <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-4)" }}>No brands found.</td></tr>
                         ) : (
-                          brands.map((brand: any) => (
+                          filteredBrands.map((brand: any) => (
                             <tr key={brand.id}>
                               <td>{brand.logo ? <img src={brand.logo} alt={brand.name} style={{ height: 24, objectFit: "contain" }} /> : "—"}</td>
                               <td style={{ fontWeight: 500 }}>{brand.name}</td>
@@ -968,7 +1014,7 @@ export default function AdminDashboard() {
               {activeView === "coupons" && (
                 <div className={styles["admin-panel"]}>
                   <div className={styles["admin-panel__header"]}>
-                    <div className={styles["admin-panel__title"]}>All Coupons ({coupons.length})</div>
+                    <div className={styles["admin-panel__title"]}>All Coupons ({filteredCoupons.length})</div>
                     <div className={styles["admin-panel__actions"]}>
                       <button className="btn btn--primary btn--sm" onClick={openAddCouponModal}>+ Add Coupon</button>
                     </div>
@@ -988,10 +1034,10 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {coupons.length === 0 ? (
+                        {filteredCoupons.length === 0 ? (
                           <tr><td colSpan={8} style={{ textAlign: "center", padding: "var(--space-4)" }}>No coupons found.</td></tr>
                         ) : (
-                          coupons.map((coupon: any) => (
+                          filteredCoupons.map((coupon: any) => (
                             <tr key={coupon.id}>
                               <td className={styles["data-table__mono"]} style={{ fontWeight: 600 }}>{coupon.code}</td>
                               <td style={{ fontSize: "var(--text-sm)" }}>{coupon.discountType}</td>
