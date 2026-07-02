@@ -16,7 +16,8 @@ import {
   Watch, 
   Plug, 
   Camera, 
-  Folder 
+  Folder,
+  PlugZap
 } from "lucide-react";
 
 export interface APIProduct {
@@ -79,6 +80,7 @@ const categoryIconMap: Record<string, any> = {
   wearables: Watch,
   accessories: Plug,
   cameras: Camera,
+  adapter: PlugZap,
 };
 
 function renderCategoryIcon(slug: string, className?: string) {

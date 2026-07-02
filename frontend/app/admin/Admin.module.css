@@ -324,18 +324,22 @@
 
 .stat-card__icon--revenue {
   background-color: rgba(43, 182, 115, 0.1);
+  color: rgb(43, 182, 115);
 }
 
 .stat-card__icon--orders {
   background-color: rgba(74, 144, 226, 0.1);
+  color: rgb(74, 144, 226);
 }
 
 .stat-card__icon--products {
   background-color: rgba(255, 122, 41, 0.1);
+  color: rgb(255, 122, 41);
 }
 
 .stat-card__icon--customers {
   background-color: rgba(155, 89, 182, 0.1);
+  color: rgb(155, 89, 182);
 }
 
 .stat-card__body {

@@ -33,7 +33,8 @@ import {
   Watch,
   Plug,
   Camera,
-  FolderOpen
+  FolderOpen,
+  PlugZap
 } from "lucide-react";
 
 const categoryIconMap: Record<string, any> = {
@@ -42,6 +43,7 @@ const categoryIconMap: Record<string, any> = {
   wearables: Watch,
   accessories: Plug,
   cameras: Camera,
+  adapter: PlugZap,
 };
 
 function renderCategoryIcon(slug: string, className?: string) {
@@ -829,7 +831,9 @@ export default function AdminDashboard() {
                   {/* Stats Grid */}
                   <div className={styles["stats-grid"]}>
                     <div className={styles["stat-card"]}>
-                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--revenue"]}`}>💰</div>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--revenue"]}`}>
+                        <DollarSign size={24} strokeWidth={2} />
+                      </div>
                       <div className={styles["stat-card__body"]}>
                         <div className={styles["stat-card__label"]}>Total Revenue</div>
                         <div className={styles["stat-card__value"]}>{formatBDT(stats.totalRevenue)}</div>
@@ -839,7 +843,9 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className={styles["stat-card"]}>
-                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--orders"]}`}>📋</div>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--orders"]}`}>
+                        <ShoppingCart size={24} strokeWidth={2} />
+                      </div>
                       <div className={styles["stat-card__body"]}>
                         <div className={styles["stat-card__label"]}>Total Orders</div>
                         <div className={styles["stat-card__value"]}>{stats.totalOrders}</div>
@@ -849,7 +855,9 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className={styles["stat-card"]}>
-                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--products"]}`}>📦</div>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--products"]}`}>
+                        <Package size={24} strokeWidth={2} />
+                      </div>
                       <div className={styles["stat-card__body"]}>
                         <div className={styles["stat-card__label"]}>Active Products</div>
                         <div className={styles["stat-card__value"]}>{stats.totalProducts}</div>
@@ -859,7 +867,9 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className={styles["stat-card"]}>
-                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--customers"]}`}>👥</div>
+                      <div className={`${styles["stat-card__icon"]} ${styles["stat-card__icon--customers"]}`}>
+                        <Users size={24} strokeWidth={2} />
+                      </div>
                       <div className={styles["stat-card__body"]}>
                         <div className={styles["stat-card__label"]}>Customers</div>
                         <div className={styles["stat-card__value"]}>{stats.totalCustomers}</div>
