@@ -148,9 +148,38 @@ adminRoutes.patch("/products/:id", async (req: Request, res: Response) => {
     updateData.sku = trimmed === "" ? null : trimmed;
   }
 
-  const product = await prisma.product.update({
-    where: { id },
-    data: updateData,
+  // Handle nested images update
+  let newImages = undefined;
+  if (updateData.images !== undefined) {
+    newImages = updateData.images;
+    delete updateData.images;
+  }
+
+  const product = await prisma.$transaction(async (tx) => {
+    if (newImages !== undefined) {
+      // Clear existing images
+      await tx.productImage.deleteMany({
+        where: { productId: id }
+      });
+      // Re-create new images
+      if (Array.isArray(newImages) && newImages.length > 0) {
+        await tx.productImage.createMany({
+          data: newImages.map((img: any, i: number) => ({
+            productId: id,
+            url: img.url,
+            alt: img.alt || null,
+            isPrimary: img.isPrimary || i === 0,
+            sortOrder: i
+          }))
+        });
+      }
+    }
+
+    return await tx.product.update({
+      where: { id },
+      data: updateData,
+      include: { images: true }
+    });
   });
 
   return res.json({ product });

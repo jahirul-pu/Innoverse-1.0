@@ -133,6 +133,9 @@ export default function AdminDashboard() {
   const [prodDesc, setProdDesc] = useState("");
   const [prodIsFeatured, setProdIsFeatured] = useState(false);
   const [prodIsNewArrival, setProdIsNewArrival] = useState(false);
+  const [prodImages, setProdImages] = useState<{ url: string; alt?: string | null; isPrimary: boolean }[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [manualImageUrl, setManualImageUrl] = useState("");
 
   // Auth check bypassed for development
   const isAdmin = true;
@@ -247,6 +250,8 @@ export default function AdminDashboard() {
     setProdDesc("");
     setProdIsFeatured(false);
     setProdIsNewArrival(false);
+    setProdImages([]);
+    setManualImageUrl("");
     setProductModalOpen(true);
   }
 
@@ -265,6 +270,14 @@ export default function AdminDashboard() {
     setProdDesc(prod.description || "");
     setProdIsFeatured(prod.isFeatured || false);
     setProdIsNewArrival(prod.isNewArrival || false);
+    setProdImages(
+      prod.images?.map((img: any) => ({
+        url: img.url,
+        alt: img.alt || "",
+        isPrimary: img.isPrimary || false,
+      })) || []
+    );
+    setManualImageUrl("");
     setProductModalOpen(true);
   }
 
@@ -284,7 +297,8 @@ export default function AdminDashboard() {
         shortDescription: prodShortDesc,
         description: prodDesc,
         isFeatured: prodIsFeatured,
-        isNewArrival: prodIsNewArrival
+        isNewArrival: prodIsNewArrival,
+        images: prodImages
       };
 
       if (editingProduct) {
@@ -315,6 +329,68 @@ export default function AdminDashboard() {
       loadAdminData();
     } catch (err: any) {
       alert(`Error saving product: ${err.message || err}`);
+    }
+  }
+
+  // Handle file uploads
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      setUploadingImages(true);
+      const formData = new FormData();
+      
+      // If uploading multiple, we can loop or use the multiple endpoint
+      if (files.length === 1) {
+        formData.append("image", files[0]);
+        const res = await fetch("http://localhost:4000/api/upload/image", {
+          method: "POST",
+          body: formData,
+          credentials: "include"
+        }).then(r => r.json());
+
+        if (res.error) throw new Error(res.error);
+        if (res.url) {
+          setProdImages((prev) => [
+            ...prev,
+            { url: res.url, isPrimary: prev.length === 0 }
+          ]);
+        }
+      } else {
+        // Multiple upload
+        Array.from(files).forEach((file) => {
+          formData.append("images", file);
+        });
+        const res = await fetch("http://localhost:4000/api/upload/images", {
+          method: "POST",
+          body: formData,
+          credentials: "include"
+        }).then(r => r.json());
+
+        if (res.error) throw new Error(res.error);
+        if (res.uploads) {
+          const newImgs = res.uploads.map((up: any) => ({
+            url: up.url,
+            isPrimary: false
+          }));
+          setProdImages((prev) => {
+            const updated = [...prev, ...newImgs];
+            // ensure at least one primary
+            if (updated.length > 0 && !updated.some(x => x.isPrimary)) {
+              updated[0].isPrimary = true;
+            }
+            return updated;
+          });
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to upload image(s): " + (err.message || err));
+    } finally {
+      setUploadingImages(false);
+      // Reset input value
+      e.target.value = "";
     }
   }
 
@@ -1229,6 +1305,99 @@ export default function AdminDashboard() {
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
                     </select>
+                  </div>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Product Images</label>
+                    <div className={styles["image-manager"]}>
+                      {/* Image Dropzone / Selector */}
+                      <label className={styles["upload-dropzone"]} style={{ border: "2px dashed var(--color-border)", borderRadius: "var(--border-radius-sm)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "var(--space-4) var(--space-3)", cursor: "pointer" }}>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={handleImageUpload}
+                          disabled={uploadingImages}
+                        />
+                        <div className={styles["upload-dropzone__icon"]} style={{ fontSize: "24px", color: "var(--color-text-tertiary)", marginBottom: "var(--space-2)" }}>
+                          {uploadingImages ? "⏳" : "📤"}
+                        </div>
+                        <div className={styles["upload-dropzone__text"]} style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
+                          {uploadingImages ? "Uploading images to server..." : "Click to select or upload images"}
+                        </div>
+                      </label>
+
+                      {/* Manual URL Input */}
+                      <div className={styles["manual-url-row"]} style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="Or paste external image URL directly..."
+                          value={manualImageUrl}
+                          onChange={(e) => setManualImageUrl(e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn--secondary"
+                          onClick={() => {
+                            if (manualImageUrl.trim()) {
+                              setProdImages((prev) => [
+                                ...prev,
+                                {
+                                  url: manualImageUrl.trim(),
+                                  isPrimary: prev.length === 0,
+                                },
+                              ]);
+                              setManualImageUrl("");
+                            }
+                          }}
+                        >
+                          Add URL
+                        </button>
+                      </div>
+
+                      {/* Images Preview Grid */}
+                      {prodImages.length > 0 && (
+                        <div className={styles["image-grid"]}>
+                          {prodImages.map((img, i) => (
+                            <div
+                              key={i}
+                              className={`${styles["image-card"]} ${img.isPrimary ? styles["image-card--primary"] : ""}`}
+                              onClick={() => {
+                                setProdImages((prev) =>
+                                  prev.map((item, idx) => ({
+                                    ...item,
+                                    isPrimary: idx === i,
+                                  }))
+                                );
+                              }}
+                              title="Click to set as primary thumbnail"
+                            >
+                              <img src={img.url.startsWith("http") || img.url.startsWith("/") ? img.url : `http://localhost:4000${img.url}`} alt={img.alt || "Product image"} className={styles["image-card__img"]} />
+                              {img.isPrimary && <span className={styles["image-card__badge"]}>Primary</span>}
+                              <button
+                                type="button"
+                                className={styles["image-card__delete"]}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setProdImages((prev) => {
+                                    const next = prev.filter((_, idx) => idx !== i);
+                                    // If we deleted the primary image, make the first one primary
+                                    if (img.isPrimary && next.length > 0) {
+                                      next[0].isPrimary = true;
+                                    }
+                                    return next;
+                                  });
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
                     <label className="label">Short Description</label>
