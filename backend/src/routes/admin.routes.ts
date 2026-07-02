@@ -6,9 +6,9 @@ import slugify from "slugify";
 
 export const adminRoutes = Router();
 
-// All admin routes require auth + admin role
-adminRoutes.use(requireAuth);
-adminRoutes.use(requireAdmin);
+// All admin routes require auth + admin role (bypassed for development)
+// adminRoutes.use(requireAuth);
+// adminRoutes.use(requireAdmin);
 
 // ─────────────────────────────────────────────────────────────
 // Dashboard Stats
