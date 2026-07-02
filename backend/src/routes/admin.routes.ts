@@ -119,7 +119,7 @@ adminRoutes.post("/products", async (req: Request, res: Response) => {
       price: data.price,
       compareAtPrice: data.compareAtPrice,
       costPrice: data.costPrice,
-      sku: data.sku || null,
+      sku: (data.sku || null) as any,
       barcode: data.barcode,
       stock: data.stock,
       lowStockThreshold: data.lowStockThreshold,
