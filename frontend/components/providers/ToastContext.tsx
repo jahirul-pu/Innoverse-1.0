@@ -48,7 +48,13 @@ export const ToastContextProvider = ({ children }: { children: React.ReactNode }
     switch (type) {
       case "success":
         return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-circuit-green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="url(#successGradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+            <defs>
+              <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="var(--color-circuit-green, #10B981)" />
+                <stop offset="100%" stopColor="var(--color-trace-blue, #4F46E5)" />
+              </linearGradient>
+            </defs>
             <polyline points="20 6 9 17 4 12" />
           </svg>
         );

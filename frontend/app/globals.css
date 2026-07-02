@@ -928,6 +928,8 @@ tr:hover td {
 }
 
 .toast-card {
+  position: relative;
+  overflow: hidden;
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
@@ -941,16 +943,30 @@ tr:hover td {
   transition: opacity 150ms ease, transform 150ms ease;
 }
 
-.toast-card--success {
-  border-left: 4px solid var(--color-circuit-green, #10b981);
+.toast-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.toast-card--success::before {
+  background: linear-gradient(to bottom, var(--color-circuit-green, #10b981), var(--color-trace-blue, #4f46e5));
 }
 
 .toast-card--error {
-  border-left: 4px solid var(--color-status-cancelled, #ef4444);
+  background-color: rgba(239, 68, 68, 0.04);
+  border-color: rgba(239, 68, 68, 0.15);
 }
 
-.toast-card--info {
-  border-left: 4px solid var(--color-trace-blue, #4f46e5);
+.toast-card--error::before {
+  background: var(--color-status-cancelled, #ef4444);
+}
+
+.toast-card--info::before {
+  background: var(--color-trace-blue, #4f46e5);
 }
 
 .toast-card__icon {
