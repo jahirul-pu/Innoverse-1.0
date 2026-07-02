@@ -7,7 +7,7 @@ import { useAuth } from "@/components/providers/AuthContext";
 import { productApi } from "@/lib/api";
 import styles from "./Admin.module.css";
 
-type AdminView = "dashboard" | "products" | "orders" | "customers";
+type AdminView = "dashboard" | "products" | "orders" | "customers" | "categories" | "brands" | "coupons";
 
 const navItems = [
   { icon: "📊", label: "Dashboard", key: "dashboard" as const },
@@ -16,11 +16,10 @@ const navItems = [
   { icon: "👥", label: "Customers", key: "customers" as const },
 ];
 
-const navUtility = [
-  { icon: "🏷️", label: "Categories" },
-  { icon: "🏢", label: "Brands" },
-  { icon: "🎫", label: "Coupons" },
-  { icon: "📸", label: "Media" },
+const navCatalog = [
+  { icon: "🏷️", label: "Categories", key: "categories" as const },
+  { icon: "🏢", label: "Brands", key: "brands" as const },
+  { icon: "🎫", label: "Coupons", key: "coupons" as const },
 ];
 
 function formatBDT(amount: number) {
@@ -42,8 +41,33 @@ export default function AdminDashboard() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Category modal state
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const [editingCat, setEditingCat] = useState<any | null>(null);
+  const [catName, setCatName] = useState("");
+  const [catDesc, setCatDesc] = useState("");
+  const [catIcon, setCatIcon] = useState("");
+
+  // Brand modal state
+  const [brandModalOpen, setBrandModalOpen] = useState(false);
+  const [editingBrand, setEditingBrand] = useState<any | null>(null);
+  const [brandName, setBrandName] = useState("");
+  const [brandLogo, setBrandLogo] = useState("");
+
+  // Coupon modal state
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<any | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponType, setCouponType] = useState("PERCENTAGE");
+  const [couponValue, setCouponValue] = useState("");
+  const [couponMinOrder, setCouponMinOrder] = useState("");
+  const [couponMaxDiscount, setCouponMaxDiscount] = useState("");
+  const [couponUsageLimit, setCouponUsageLimit] = useState("");
+  const [couponExpiry, setCouponExpiry] = useState("");
 
   // CRUD Modals state
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -85,12 +109,16 @@ export default function AdminDashboard() {
         setLowStockProducts(statsRes.lowStockProducts || []);
       }
 
-      // 2. Load all categories & brands
-      const catRes = await fetch("http://localhost:4000/api/categories").then(r => r.json());
+      // 2. Load all categories & brands (from admin endpoints which include inactive + counts)
+      const catRes = await fetch("http://localhost:4000/api/admin/categories").then(r => r.json());
       if (catRes && catRes.categories) setCategories(catRes.categories);
 
-      const brandRes = await fetch("http://localhost:4000/api/products/brands").then(r => r.json());
+      const brandRes = await fetch("http://localhost:4000/api/admin/brands").then(r => r.json());
       if (brandRes && brandRes.brands) setBrands(brandRes.brands);
+
+      // 2b. Load coupons
+      const couponRes = await fetch("http://localhost:4000/api/admin/coupons").then(r => r.json());
+      if (couponRes && couponRes.coupons) setCoupons(couponRes.coupons);
 
       // 3. Load live products list
       const prodRes = await productApi.list({ limit: 100 });
@@ -255,13 +283,218 @@ export default function AdminDashboard() {
     }
   }
 
+  // Category Modal Handlers
+  function openAddCatModal() {
+    setEditingCat(null);
+    setCatName("");
+    setCatDesc("");
+    setCatIcon("");
+    setCatModalOpen(true);
+  }
 
+  function openEditCatModal(cat: any) {
+    setEditingCat(cat);
+    setCatName(cat.name || "");
+    setCatDesc(cat.description || "");
+    setCatIcon(cat.icon || "");
+    setCatModalOpen(true);
+  }
+
+  async function handleCatSave(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const payload = {
+        name: catName,
+        description: catDesc,
+        icon: catIcon,
+      };
+      let res;
+      if (editingCat) {
+        res = await fetch(`http://localhost:4000/api/admin/categories/${editingCat.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+      } else {
+        res = await fetch(`http://localhost:4000/api/admin/categories`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+      }
+      if (res.error) throw new Error(res.error);
+      alert(editingCat ? "Category updated successfully!" : "Category created successfully!");
+      setCatModalOpen(false);
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error saving category: ${err.message || err}`);
+    }
+  }
+
+  async function handleCatDelete(id: string) {
+    if (!confirm("Are you sure you want to deactivate this category?")) return;
+    try {
+      const res = await fetch(`http://localhost:4000/api/admin/categories/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      }).then(r => r.json());
+      if (res.error) throw new Error(res.error);
+      alert("Category deactivated successfully!");
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error deleting category: ${err.message || err}`);
+    }
+  }
+
+  // Brand Modal Handlers
+  function openAddBrandModal() {
+    setEditingBrand(null);
+    setBrandName("");
+    setBrandLogo("");
+    setBrandModalOpen(true);
+  }
+
+  function openEditBrandModal(brand: any) {
+    setEditingBrand(brand);
+    setBrandName(brand.name || "");
+    setBrandLogo(brand.logo || "");
+    setBrandModalOpen(true);
+  }
+
+  async function handleBrandSave(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const payload = {
+        name: brandName,
+        logo: brandLogo,
+      };
+      let res;
+      if (editingBrand) {
+        res = await fetch(`http://localhost:4000/api/admin/brands/${editingBrand.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+      } else {
+        res = await fetch(`http://localhost:4000/api/admin/brands`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+      }
+      if (res.error) throw new Error(res.error);
+      alert(editingBrand ? "Brand updated successfully!" : "Brand created successfully!");
+      setBrandModalOpen(false);
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error saving brand: ${err.message || err}`);
+    }
+  }
+
+  async function handleBrandDelete(id: string) {
+    if (!confirm("Are you sure you want to deactivate this brand?")) return;
+    try {
+      const res = await fetch(`http://localhost:4000/api/admin/brands/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      }).then(r => r.json());
+      if (res.error) throw new Error(res.error);
+      alert("Brand deactivated successfully!");
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error deleting brand: ${err.message || err}`);
+    }
+  }
+
+  // Coupon Modal Handlers
+  function openAddCouponModal() {
+    setEditingCoupon(null);
+    setCouponCode("");
+    setCouponType("PERCENTAGE");
+    setCouponValue("");
+    setCouponMinOrder("");
+    setCouponMaxDiscount("");
+    setCouponUsageLimit("");
+    setCouponExpiry("");
+    setCouponModalOpen(true);
+  }
+
+  function openEditCouponModal(coupon: any) {
+    setEditingCoupon(coupon);
+    setCouponCode(coupon.code || "");
+    setCouponType(coupon.discountType || "PERCENTAGE");
+    setCouponValue(coupon.discountValue?.toString() || "");
+    setCouponMinOrder(coupon.minOrderAmount?.toString() || "");
+    setCouponMaxDiscount(coupon.maxDiscount?.toString() || "");
+    setCouponUsageLimit(coupon.usageLimit?.toString() || "");
+    setCouponExpiry(coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().split('T')[0] : "");
+    setCouponModalOpen(true);
+  }
+
+  async function handleCouponSave(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const payload = {
+        code: couponCode,
+        discountType: couponType,
+        discountValue: Number(couponValue),
+        minOrderAmount: couponMinOrder ? Number(couponMinOrder) : null,
+        maxDiscount: couponMaxDiscount ? Number(couponMaxDiscount) : null,
+        usageLimit: couponUsageLimit ? Number(couponUsageLimit) : null,
+        expiresAt: couponExpiry ? new Date(couponExpiry).toISOString() : null,
+      };
+      let res;
+      if (editingCoupon) {
+        res = await fetch(`http://localhost:4000/api/admin/coupons/${editingCoupon.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+      } else {
+        res = await fetch(`http://localhost:4000/api/admin/coupons`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include"
+        }).then(r => r.json());
+      }
+      if (res.error) throw new Error(res.error);
+      alert(editingCoupon ? "Coupon updated successfully!" : "Coupon created successfully!");
+      setCouponModalOpen(false);
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error saving coupon: ${err.message || err}`);
+    }
+  }
+
+  async function handleCouponDelete(id: string) {
+    if (!confirm("Are you sure you want to deactivate this coupon?")) return;
+    try {
+      const res = await fetch(`http://localhost:4000/api/admin/coupons/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      }).then(r => r.json());
+      if (res.error) throw new Error(res.error);
+      alert("Coupon deactivated successfully!");
+      loadAdminData();
+    } catch (err: any) {
+      alert(`Error deleting coupon: ${err.message || err}`);
+    }
+  }
 
   const viewTitles: Record<AdminView, string> = {
     dashboard: "Dashboard",
     products: "Products",
     orders: "Orders",
     customers: "Customers",
+    categories: "Categories",
+    brands: "Brands",
+    coupons: "Coupons",
   };
 
   return (
@@ -292,15 +525,23 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          {/* Catalog Utility Stubs */}
+          {/* Catalog */}
           <div className={styles["admin-nav__group"]}>
             <div className={styles["admin-nav__group-label"]}>Catalog</div>
-            {navUtility.map((item) => (
-              <button key={item.label} className={styles["admin-nav__link"]} onClick={() => alert(`${item.label} management is currently stubbed.`)}>
+            {navCatalog.map((item) => (
+              <button
+                key={item.key}
+                className={`${styles["admin-nav__link"]} ${activeView === item.key ? styles["admin-nav__link--active"] : ""}`}
+                onClick={() => setActiveView(item.key)}
+              >
                 <span className={styles["admin-nav__icon"]}>{item.icon}</span>
                 {item.label}
               </button>
             ))}
+            <button className={styles["admin-nav__link"]} onClick={() => alert("Media management coming soon.")}>
+              <span className={styles["admin-nav__icon"]}>📸</span>
+              Media
+            </button>
           </div>
 
           {/* System */}
@@ -614,6 +855,171 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Categories View */}
+              {activeView === "categories" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>All Categories ({categories.length})</div>
+                    <div className={styles["admin-panel__actions"]}>
+                      <button className="btn btn--primary btn--sm" onClick={openAddCatModal}>+ Add Category</button>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Icon</th>
+                          <th>Name</th>
+                          <th>Slug</th>
+                          <th>Description</th>
+                          <th>Products</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {categories.length === 0 ? (
+                          <tr><td colSpan={7} style={{ textAlign: "center", padding: "var(--space-4)" }}>No categories found.</td></tr>
+                        ) : (
+                          categories.map((cat: any) => (
+                            <tr key={cat.id}>
+                              <td style={{ fontSize: "var(--text-lg)" }}>{cat.icon || "📁"}</td>
+                              <td style={{ fontWeight: 500 }}>{cat.name}</td>
+                              <td className={styles["data-table__mono"]} style={{ fontSize: "var(--text-xs)" }}>{cat.slug}</td>
+                              <td style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>{cat.description || "—"}</td>
+                              <td className={styles["data-table__mono"]}>{cat._count?.products ?? 0}</td>
+                              <td>
+                                <span className={`${styles["status-dot"]} ${cat.isActive ? styles["status-dot--confirmed"] : styles["status-dot--cancelled"]}`}>
+                                  {cat.isActive ? "Active" : "Inactive"}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                  <button className="btn btn--secondary btn--sm" onClick={() => openEditCatModal(cat)}>Edit</button>
+                                  {cat.isActive && (
+                                    <button className="btn btn--secondary btn--sm" style={{ color: "var(--color-status-cancelled)" }} onClick={() => handleCatDelete(cat.id)}>Deactivate</button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Brands View */}
+              {activeView === "brands" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>All Brands ({brands.length})</div>
+                    <div className={styles["admin-panel__actions"]}>
+                      <button className="btn btn--primary btn--sm" onClick={openAddBrandModal}>+ Add Brand</button>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Logo</th>
+                          <th>Name</th>
+                          <th>Slug</th>
+                          <th>Products</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {brands.length === 0 ? (
+                          <tr><td colSpan={6} style={{ textAlign: "center", padding: "var(--space-4)" }}>No brands found.</td></tr>
+                        ) : (
+                          brands.map((brand: any) => (
+                            <tr key={brand.id}>
+                              <td>{brand.logo ? <img src={brand.logo} alt={brand.name} style={{ height: 24, objectFit: "contain" }} /> : "—"}</td>
+                              <td style={{ fontWeight: 500 }}>{brand.name}</td>
+                              <td className={styles["data-table__mono"]} style={{ fontSize: "var(--text-xs)" }}>{brand.slug}</td>
+                              <td className={styles["data-table__mono"]}>{brand._count?.products ?? 0}</td>
+                              <td>
+                                <span className={`${styles["status-dot"]} ${brand.isActive ? styles["status-dot--confirmed"] : styles["status-dot--cancelled"]}`}>
+                                  {brand.isActive ? "Active" : "Inactive"}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                  <button className="btn btn--secondary btn--sm" onClick={() => openEditBrandModal(brand)}>Edit</button>
+                                  {brand.isActive && (
+                                    <button className="btn btn--secondary btn--sm" style={{ color: "var(--color-status-cancelled)" }} onClick={() => handleBrandDelete(brand.id)}>Deactivate</button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Coupons View */}
+              {activeView === "coupons" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>All Coupons ({coupons.length})</div>
+                    <div className={styles["admin-panel__actions"]}>
+                      <button className="btn btn--primary btn--sm" onClick={openAddCouponModal}>+ Add Coupon</button>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Code</th>
+                          <th>Type</th>
+                          <th>Value</th>
+                          <th>Min Order</th>
+                          <th>Limit / Used</th>
+                          <th>Status</th>
+                          <th>Expires</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {coupons.length === 0 ? (
+                          <tr><td colSpan={8} style={{ textAlign: "center", padding: "var(--space-4)" }}>No coupons found.</td></tr>
+                        ) : (
+                          coupons.map((coupon: any) => (
+                            <tr key={coupon.id}>
+                              <td className={styles["data-table__mono"]} style={{ fontWeight: 600 }}>{coupon.code}</td>
+                              <td style={{ fontSize: "var(--text-sm)" }}>{coupon.discountType}</td>
+                              <td className={styles["data-table__mono"]}>{coupon.discountType === "PERCENTAGE" ? `${coupon.discountValue}%` : formatBDT(Number(coupon.discountValue))}</td>
+                              <td className={styles["data-table__mono"]}>{coupon.minOrderAmount ? formatBDT(Number(coupon.minOrderAmount)) : "—"}</td>
+                              <td className={styles["data-table__mono"]}>{coupon.usageLimit ? `${coupon.usedCount} / ${coupon.usageLimit}` : `${coupon.usedCount} / ∞`}</td>
+                              <td>
+                                <span className={`${styles["status-dot"]} ${coupon.isActive ? styles["status-dot--confirmed"] : styles["status-dot--cancelled"]}`}>
+                                  {coupon.isActive ? "Active" : "Inactive"}
+                                </span>
+                              </td>
+                              <td className={styles["data-table__mono"]} style={{ fontSize: "var(--text-xs)" }}>{coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : "Never"}</td>
+                              <td>
+                                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                  <button className="btn btn--secondary btn--sm" onClick={() => openEditCouponModal(coupon)}>Edit</button>
+                                  {coupon.isActive && (
+                                    <button className="btn btn--secondary btn--sm" style={{ color: "var(--color-status-cancelled)" }} onClick={() => handleCouponDelete(coupon.id)}>Deactivate</button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -699,6 +1105,132 @@ export default function AdminDashboard() {
           </div>
         </>
       )}
+      {/* ── Add / Edit Category Modal ── */}
+      {catModalOpen && (
+        <>
+          <div className="overlay overlay--visible" onClick={() => setCatModalOpen(false)} style={{ zIndex: 999 }} />
+          <div className={styles.modal}>
+            <div className={styles.modal__header}>
+              <h3 className={styles.modal__title}>
+                {editingCat ? "Edit Category" : "Create New Category"}
+              </h3>
+              <button className={styles.modal__close} onClick={() => setCatModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={handleCatSave}>
+              <div className={styles.modal__body}>
+                <div className={styles["form-grid"]}>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Category Name</label>
+                    <input type="text" className="input" required value={catName} onChange={(e) => setCatName(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Icon (Emoji / text)</label>
+                    <input type="text" className="input" value={catIcon} placeholder="e.g. 🎧" onChange={(e) => setCatIcon(e.target.value)} />
+                  </div>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Description</label>
+                    <textarea className="input" style={{ height: 80, resize: "vertical" }} value={catDesc} onChange={(e) => setCatDesc(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modal__footer}>
+                <button type="button" className="btn btn--secondary" onClick={() => setCatModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn--primary">Save Category</button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* ── Add / Edit Brand Modal ── */}
+      {brandModalOpen && (
+        <>
+          <div className="overlay overlay--visible" onClick={() => setBrandModalOpen(false)} style={{ zIndex: 999 }} />
+          <div className={styles.modal}>
+            <div className={styles.modal__header}>
+              <h3 className={styles.modal__title}>
+                {editingBrand ? "Edit Brand" : "Create New Brand"}
+              </h3>
+              <button className={styles.modal__close} onClick={() => setBrandModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={handleBrandSave}>
+              <div className={styles.modal__body}>
+                <div className={styles["form-grid"]}>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Brand Name</label>
+                    <input type="text" className="input" required value={brandName} onChange={(e) => setBrandName(e.target.value)} />
+                  </div>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Logo Image URL</label>
+                    <input type="text" className="input" value={brandLogo} placeholder="e.g. /images/logo.png" onChange={(e) => setBrandLogo(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modal__footer}>
+                <button type="button" className="btn btn--secondary" onClick={() => setBrandModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn--primary">Save Brand</button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* ── Add / Edit Coupon Modal ── */}
+      {couponModalOpen && (
+        <>
+          <div className="overlay overlay--visible" onClick={() => setCouponModalOpen(false)} style={{ zIndex: 999 }} />
+          <div className={styles.modal}>
+            <div className={styles.modal__header}>
+              <h3 className={styles.modal__title}>
+                {editingCoupon ? "Edit Coupon" : "Create New Coupon"}
+              </h3>
+              <button className={styles.modal__close} onClick={() => setCouponModalOpen(false)}>×</button>
+            </div>
+            <form onSubmit={handleCouponSave}>
+              <div className={styles.modal__body}>
+                <div className={styles["form-grid"]}>
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                    <label className="label">Coupon Code</label>
+                    <input type="text" className="input" required style={{ textTransform: "uppercase" }} value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Discount Type</label>
+                    <select className="select" value={couponType} onChange={(e) => setCouponType(e.target.value)}>
+                      <option value="PERCENTAGE">Percentage (%)</option>
+                      <option value="FIXED">Fixed Amount (৳)</option>
+                    </select>
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Discount Value</label>
+                    <input type="number" className="input" required min="1" value={couponValue} onChange={(e) => setCouponValue(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Min Order Amount (৳, optional)</label>
+                    <input type="number" className="input" min="0" value={couponMinOrder} onChange={(e) => setCouponMinOrder(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Max Discount (৳, optional)</label>
+                    <input type="number" className="input" min="0" value={couponMaxDiscount} onChange={(e) => setCouponMaxDiscount(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Usage Limit (optional)</label>
+                    <input type="number" className="input" min="1" value={couponUsageLimit} onChange={(e) => setCouponUsageLimit(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Expiry Date (optional)</label>
+                    <input type="date" className="input" value={couponExpiry} onChange={(e) => setCouponExpiry(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modal__footer}>
+                <button type="button" className="btn btn--secondary" onClick={() => setCouponModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn--primary">Save Coupon</button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+

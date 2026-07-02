@@ -243,8 +243,22 @@ adminRoutes.patch("/orders/:id/status", async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// Category & Brand Management
+// Category Management
 // ─────────────────────────────────────────────────────────────
+
+// GET /api/admin/categories — all categories including inactive, with product counts
+adminRoutes.get("/categories", async (_req: Request, res: Response) => {
+  const categories = await prisma.category.findMany({
+    orderBy: { sortOrder: "asc" },
+    include: {
+      _count: { select: { products: true } },
+      parent: { select: { id: true, name: true } },
+    },
+  });
+  return res.json({ categories });
+});
+
+// POST /api/admin/categories
 adminRoutes.post("/categories", async (req: Request, res: Response) => {
   const { name, description, icon, image, parentId } = req.body;
   const slug = slugify(name, { lower: true, strict: true });
@@ -256,6 +270,50 @@ adminRoutes.post("/categories", async (req: Request, res: Response) => {
   return res.status(201).json({ category });
 });
 
+// PATCH /api/admin/categories/:id
+adminRoutes.patch("/categories/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const { name, description, icon, image, parentId, isActive, sortOrder } = req.body;
+
+  const data: any = {};
+  if (name !== undefined) {
+    data.name = name;
+    data.slug = slugify(name, { lower: true, strict: true });
+  }
+  if (description !== undefined) data.description = description;
+  if (icon !== undefined) data.icon = icon;
+  if (image !== undefined) data.image = image;
+  if (parentId !== undefined) data.parentId = parentId || null;
+  if (isActive !== undefined) data.isActive = isActive;
+  if (sortOrder !== undefined) data.sortOrder = sortOrder;
+
+  const category = await prisma.category.update({ where: { id }, data });
+  return res.json({ category });
+});
+
+// DELETE /api/admin/categories/:id (soft delete)
+adminRoutes.delete("/categories/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  await prisma.category.update({ where: { id }, data: { isActive: false } });
+  return res.json({ message: "Category deactivated" });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Brand Management
+// ─────────────────────────────────────────────────────────────
+
+// GET /api/admin/brands — all brands including inactive, with product counts
+adminRoutes.get("/brands", async (_req: Request, res: Response) => {
+  const brands = await prisma.brand.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      _count: { select: { products: true } },
+    },
+  });
+  return res.json({ brands });
+});
+
+// POST /api/admin/brands
 adminRoutes.post("/brands", async (req: Request, res: Response) => {
   const { name, logo } = req.body;
   const slug = slugify(name, { lower: true, strict: true });
@@ -265,4 +323,85 @@ adminRoutes.post("/brands", async (req: Request, res: Response) => {
   });
 
   return res.status(201).json({ brand });
+});
+
+// PATCH /api/admin/brands/:id
+adminRoutes.patch("/brands/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const { name, logo, isActive } = req.body;
+
+  const data: any = {};
+  if (name !== undefined) {
+    data.name = name;
+    data.slug = slugify(name, { lower: true, strict: true });
+  }
+  if (logo !== undefined) data.logo = logo;
+  if (isActive !== undefined) data.isActive = isActive;
+
+  const brand = await prisma.brand.update({ where: { id }, data });
+  return res.json({ brand });
+});
+
+// DELETE /api/admin/brands/:id (soft delete)
+adminRoutes.delete("/brands/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  await prisma.brand.update({ where: { id }, data: { isActive: false } });
+  return res.json({ message: "Brand deactivated" });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Coupon Management
+// ─────────────────────────────────────────────────────────────
+
+// GET /api/admin/coupons
+adminRoutes.get("/coupons", async (_req: Request, res: Response) => {
+  const coupons = await prisma.coupon.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  return res.json({ coupons });
+});
+
+// POST /api/admin/coupons
+adminRoutes.post("/coupons", async (req: Request, res: Response) => {
+  const { code, discountType, discountValue, minOrderAmount, maxDiscount, usageLimit, expiresAt } = req.body;
+
+  const coupon = await prisma.coupon.create({
+    data: {
+      code: code.toUpperCase(),
+      discountType,
+      discountValue,
+      minOrderAmount: minOrderAmount || null,
+      maxDiscount: maxDiscount || null,
+      usageLimit: usageLimit || null,
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+    },
+  });
+
+  return res.status(201).json({ coupon });
+});
+
+// PATCH /api/admin/coupons/:id
+adminRoutes.patch("/coupons/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const { code, discountType, discountValue, minOrderAmount, maxDiscount, usageLimit, isActive, expiresAt } = req.body;
+
+  const data: any = {};
+  if (code !== undefined) data.code = code.toUpperCase();
+  if (discountType !== undefined) data.discountType = discountType;
+  if (discountValue !== undefined) data.discountValue = discountValue;
+  if (minOrderAmount !== undefined) data.minOrderAmount = minOrderAmount || null;
+  if (maxDiscount !== undefined) data.maxDiscount = maxDiscount || null;
+  if (usageLimit !== undefined) data.usageLimit = usageLimit || null;
+  if (isActive !== undefined) data.isActive = isActive;
+  if (expiresAt !== undefined) data.expiresAt = expiresAt ? new Date(expiresAt) : null;
+
+  const coupon = await prisma.coupon.update({ where: { id }, data });
+  return res.json({ coupon });
+});
+
+// DELETE /api/admin/coupons/:id (soft delete)
+adminRoutes.delete("/coupons/:id", async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  await prisma.coupon.update({ where: { id }, data: { isActive: false } });
+  return res.json({ message: "Coupon deactivated" });
 });
