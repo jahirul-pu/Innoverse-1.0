@@ -115,6 +115,9 @@
 
 .checkout-section__title-icon {
   font-size: var(--text-lg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── Form Fields ── */
@@ -259,6 +262,9 @@
 
 .payment-option__icon {
   font-size: var(--text-xl);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .payment-option__info {
@@ -322,6 +328,9 @@
 
 .delivery-zone__icon {
   font-size: var(--text-xl);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .delivery-zone__name {
@@ -378,6 +387,9 @@
 .review-item__image-placeholder {
   font-size: 1rem;
   opacity: 0.3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .review-item__info {
