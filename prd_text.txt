@@ -705,143 +705,47 @@ defective-only vs. change-of-mind)? This directly feeds the return-reduction mea
  
  
 15. Proposed Visual Style Direction 
-Since there's no existing brand identity yet, this is a proposed starting point — grounded in the 
-product itself rather than a generic e-commerce template — for your designer/developer to react 
-to and refine. 
-15.1 Concept: "The Spec Sheet" 
-Position Innoverse visually as the technician, not the hype-seller. The direction borrows its 
-visual language from the objects the audience already trusts and reads fluently: datasheets, 
-multimeter readouts, PCB silkscreen, spec tables. Every color and label carries functional 
-meaning (a stock status, a price, an order state) rather than existing purely for decoration — 
-which also reinforces the platform's promise of clear, simple stock and delivery information, 
-without ever surfacing internal supply-chain detail to the customer (§5.5). It should feel precise, 
-quietly confident, and a little bit workshop — not loud, not luxury, not another blue-and-white 
-marketplace template. 
-15.2 Color Palette 
-Name 
-Hex 
-Role 
-Fog 
-#F3F4F1 
-Light-mode background 
-("paper") 
-Graphite 
-#17191C 
-Dark-mode background 
-Ink 
-#1C1E20 
-Primary text (light mode); 
-becomes #EDEFF0 on dark 
-Signal Amber 
-#FF7A29 
-Primary accent — CTAs, 
-discounts, "Buy Now," price 
-emphasis 
-Trace Blue 
-#2F6FED 
-Secondary accent — links, 
-and order-tracking states 
-(Processing, Shipped, Out for 
-Delivery) 
-Circuit Green 
-#2BB673 
-Success/positive — "In 
-Stock," Delivered, 
-confirmations 
- 
-Amber, blue, and green function like status LEDs on a device: amber = act now (CTAs, 
-discounts), blue = in progress (order tracking), green = good to go (in stock, delivered). This 
-gives stock and order states a consistent, native visual vocabulary across the whole site instead 
-of ad hoc badge colors. 
-15.3 Typography 
-Role 
-Typeface 
-Usage 
-Display 
-Space Grotesk 
-Headlines, category titles — 
-geometric with a slightly 
-technical edge, used with 
-restraint (large sizes only) 
-Body 
-IBM Plex Sans 
-Body copy, descriptions, UI 
-labels — a face genuinely 
-designed for 
-technical/engineering 
-documentation, so it reads as 
-credible on spec-heavy 
-product pages 
-Data / Numerals 
-IBM Plex Mono (or JetBrains 
-Mono) 
-Prices, discount %, SKUs, 
-order/tracking numbers, 
-countdowns — set with 
-tabular figures 
- 
-All three are free and widely available (Google Fonts), so there's no licensing friction for 
-development. 
- 
-Signature element: prices, discount percentages, delivery-date estimates, and order-tracking 
-numbers are all set in the monospace data face — like a multimeter or spec-sheet reading. It's 
-the one deliberate "risk" in the system: it makes numbers feel measured and precise rather than 
-shouted, and it's something a competitor's generic template won't have. 
-15.4 Layout Notes 
--​
-Grid-based product listings; generous whitespace; thin 1px hairline dividers between 
-sections (like a PCB trace or a spec-table row) instead of heavy drop shadows. 
--​
-Minimal border-radius — sharp-ish corners on cards and buttons (4–6px), reinforcing the 
-"instrument panel" feel rather than a soft, plush consumer-app look. 
--​
-Every product card carries a small status dot (green = in stock, grey = out of stock) next 
-to a monospace price. The same dot-plus-label pattern reappears in the order-tracking 
-timeline using blue for in-progress states (Processing, Out for Delivery) — one 
-consistent visual system for "where things stand," everywhere on the site. 
- 
-┌─────────────────────────────┐ 
- 
-│  [ product photo ]           │ 
- 
-│                               │ 
- 
-│  ● IN STOCK                  │   ← status dot + mono label 
- 
-│  Wireless ANC Earbuds        │   ← Space Grotesk 
- 
-│  ৳ 3,450  ৳2,990  −13%       │   ← IBM Plex Mono, tabular 
- 
-└─────────────────────────────┘ 
-15.5 Light / Dark Mode 
-Token 
-Light 
-Dark 
-Background 
-Fog #F3F4F1 
-Graphite #17191C 
-Surface (cards) 
-#FFFFFF 
-#1F2226 
-Text 
-Ink #1C1E20 
-#EDEFF0 
-Border/divider 
-#DEDFDB 
-#2B2E32 
-Accents 
-Same amber/blue/green, 
-unchanged 
-Same hues, +8–10% 
-lightness for contrast 
- 
-Keeping the accent hues identical across modes (only adjusting lightness) keeps the "status 
-LED" language consistent regardless of which mode the customer is in. 
-15.6 Motion 
-Restrained by default: a subtle lift + shadow on card hover, a soft pulse on the blue "Out for 
-Delivery" indicator in the order-tracking timeline to imply it's actively updating, snappy (not 
-animated) page transitions. Respect prefers-reduced-motion. No large gradient washes or 
-scroll-triggered fireworks — the personality lives in type and the status system, not in animation. 
+Innoverse's visual identity has been updated to align with a modern, minimalist, and premium e-commerce look. The direction transitions from the workshop-style "Spec Sheet" theme to a polished, premium storefront that emphasizes clean whitespace, soft shadows, rounded corners, and sophisticated typography.
+
+15.1 Concept: "Modern Minimalist / Premium E-commerce"
+Position Innoverse visually as a high-end, reliable tech storefront. The design borrows visual cues from modern tech leaders (e.g., Apple, Stripe): clean white and slate surfaces, elegant high-contrast headers, smooth transitions, and distinct border styling. This reinforces our promise of transactional safety and operational reliability without looking industrial or cluttered.
+
+15.2 Color Palette
+Accents (same across light/dark):
+- Signal Amber (#FF5A1F): Primary accent used for primary CTAs, pricing, discounts, and brand highlights.
+- Trace Blue (#4F46E5): Secondary accent used for links, badges, and progress tracking states.
+- Circuit Green (#10B981): Success indicators (In Stock, delivered confirmations).
+
+Light Mode (default):
+- Background: Slate-white (#F9FAFB)
+- Surface (cards): Pure White (#FFFFFF)
+- Text Primary: Ink/Deep Grey (#111827)
+- Text Secondary: Cool Grey (#4B5563)
+- Border/divider: Soft Grey (#E5E7EB)
+
+Dark Mode:
+- Background: Graphite (#17191C)
+- Surface (cards): Slate-grey (#1F2226)
+- Text Primary: Off-white (#EDEFF0)
+- Text Secondary: Cool Grey (#A0A4AA)
+- Border/divider: Dark Grey (#2B2E32)
+
+15.3 Typography
+- Display: Plus Jakarta Sans (Headlines, category titles — elegant display sans-serif with geometric roundness).
+- Body / Data / Numerals: Inter (Body copy, specs, pricing, and numbers — clean, highly readable, standard sans-serif that fits a premium brand).
+
+15.4 Layout Notes
+- Grid-based layouts with generous padding and whitespace.
+- Soft border-radius: Rounded corners on cards, inputs, and buttons (6px for small, 8px for medium, 12px for large, 16px for extra-large), creating a friendly, high-quality product feel.
+- Card elevations: Subtle ambient shadows (0 4px 6px -1px rgba(0,0,0,0.1)) to lift items off the background, transitioning to slightly deeper shadows on hover.
+- Trust indicators: A trust strip featuring "Secure Payment" (indicated by a Lock icon) instead of technical mobile tags.
+
+15.5 Light / Dark Mode
+Accents are maintained with identical hues across light and dark modes to protect brand identity, while background and surface tokens transition from bright slate-white to deep graphite shades.
+
+15.6 Motion
+Smooth and responsive: Cards lift slightly on hover (transform: translateY(-2px/4px)) combined with shadow transitions. Snappy transitions and clean loaders are used to emphasize high site speed. Respects prefers-reduced-motion.
+
 15.7 What This Deliberately Avoids 
 To keep this from reading as a generic template, it steers away from the current default 
 AI-design clichés: no warm-cream-and-serif-terracotta look, no 
