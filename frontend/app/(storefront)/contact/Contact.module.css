@@ -1,0 +1,286 @@
+.contactContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+  font-family: var(--font-body);
+}
+
+.contactHeader {
+  text-align: center;
+  margin-bottom: var(--space-12);
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: var(--space-8);
+}
+
+.contactTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.contactSubtitle {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: var(--leading-relaxed);
+}
+
+.contactGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: var(--space-10);
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .contactGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-12);
+  }
+}
+
+.contactSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.cardSection {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-6);
+}
+
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.infoItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.infoIcon {
+  color: var(--color-signal-amber);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.infoLabel {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.infoValue {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+}
+
+.infoValue a {
+  color: var(--color-trace-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.infoValue a:hover {
+  color: var(--color-trace-blue-hover);
+}
+
+.infoNote {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  background-color: var(--color-bg);
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-signal-amber);
+  border-radius: var(--border-radius-sm);
+  line-height: var(--leading-normal);
+}
+
+/* Form Styles */
+.formWrapper {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-8) var(--space-6);
+}
+
+.formGroup {
+  margin-bottom: var(--space-5);
+}
+
+.formLabel {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.inputField,
+.selectField,
+.textareaField {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inputField:focus,
+.selectField:focus,
+.textareaField:focus {
+  outline: none;
+  border-color: var(--color-signal-amber);
+  box-shadow: 0 0 0 2px rgba(255, 122, 41, 0.15);
+}
+
+.textareaField {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.formSubmitBtn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--color-signal-amber);
+  color: var(--color-surface);
+  border: 1px solid var(--color-signal-amber-hover);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.formSubmitBtn:hover {
+  background-color: var(--color-signal-amber-hover);
+}
+
+.formSubmitBtn:active {
+  transform: scale(0.98);
+}
+
+.formSubmitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.formNote {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+/* Quick Links Styles */
+.quickLinksList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.quickLinkCard {
+  display: block;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.quickLinkCard:hover {
+  border-color: var(--color-signal-amber);
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.quickLinkTitle {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  margin-bottom: 2px;
+}
+
+.quickLinkDesc {
+  font-size: var(--text-sm);
+}
+
+/* Social Links */
+.socialsRow {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  transition: all 0.2s ease;
+}
+
+.socialLink:hover {
+  border-color: var(--color-trace-blue);
+  color: var(--color-trace-blue);
+  background-color: var(--color-surface-hover);
+}
+
+.successMessage {
+  padding: var(--space-8);
+  text-align: center;
+  background-color: var(--color-surface);
+  border: 2px dashed var(--color-circuit-green);
+  border-radius: var(--border-radius-sm);
+}
+
+.successTitle {
+  color: var(--color-circuit-green);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-2);
+}
+
+.successText {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+}
