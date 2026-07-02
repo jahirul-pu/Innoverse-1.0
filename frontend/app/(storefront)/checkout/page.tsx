@@ -8,6 +8,18 @@ import { useAuth } from "@/components/providers/AuthContext";
 import { orderApi } from "@/lib/api";
 import styles from "./Checkout.module.css";
 import cartStyles from "../cart/Cart.module.css";
+import { 
+  MapPin, 
+  Truck, 
+  Building, 
+  Globe, 
+  CreditCard, 
+  Coins, 
+  Smartphone, 
+  Phone, 
+  Package,
+  ShieldCheck
+} from "lucide-react";
 
 function formatBDT(amount: number) {
   return `৳${amount.toLocaleString("en-BD")}`;
@@ -113,7 +125,6 @@ export default function CheckoutPage() {
     );
   }
 
-
   // If cart is empty and order is not placed yet
   if (items.length === 0 && !placedOrder) {
     return (
@@ -129,7 +140,9 @@ export default function CheckoutPage() {
   if (placedOrder) {
     return (
       <div className="container" style={{ maxWidth: 600, margin: "60px auto", padding: "var(--space-8)", backgroundColor: "var(--color-surface)", border: "var(--border-hairline)", borderRadius: "var(--border-radius-md)", textAlign: "center" }}>
-        <div style={{ fontSize: "4rem", marginBottom: "var(--space-4)" }}>🎉</div>
+        <div style={{ display: "flex", justifyContent: "center", fontSize: "4rem", marginBottom: "var(--space-4)", color: "var(--color-circuit-green)" }}>
+          <ShieldCheck size={64} />
+        </div>
         <h2 style={{ marginBottom: "var(--space-2)" }}>Order Placed Successfully!</h2>
         <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>
           Thank you for your purchase. Your order number is{" "}
@@ -220,7 +233,7 @@ export default function CheckoutPage() {
             <>
               <div className={styles["checkout-section"]}>
                 <h2 className={styles["checkout-section__title"]}>
-                  <span className={styles["checkout-section__title-icon"]}>📍</span>
+                  <span className={styles["checkout-section__title-icon"]}><MapPin size={20} /></span>
                   Shipping Address
                 </h2>
                 <div className={styles["form-grid"]}>
@@ -293,7 +306,7 @@ export default function CheckoutPage() {
               {/* Delivery Zone */}
               <div className={styles["checkout-section"]}>
                 <h2 className={styles["checkout-section__title"]}>
-                  <span className={styles["checkout-section__title-icon"]}>🚚</span>
+                  <span className={styles["checkout-section__title-icon"]}><Truck size={20} /></span>
                   Delivery Zone
                 </h2>
                 <div className={styles["delivery-zones"]}>
@@ -304,7 +317,7 @@ export default function CheckoutPage() {
                       setDistrict("dhaka");
                     }}
                   >
-                    <span className={styles["delivery-zone__icon"]}>🏙️</span>
+                    <span className={styles["delivery-zone__icon"]}><Building size={20} /></span>
                     <span className={styles["delivery-zone__name"]}>Inside Dhaka</span>
                     <div className={styles["delivery-zone__details"]}>
                       <span className={styles["delivery-zone__time"]}>1–2 business days</span>
@@ -318,7 +331,7 @@ export default function CheckoutPage() {
                       if (district === "dhaka") setDistrict("");
                     }}
                   >
-                    <span className={styles["delivery-zone__icon"]}>🌏</span>
+                    <span className={styles["delivery-zone__icon"]}><Globe size={20} /></span>
                     <span className={styles["delivery-zone__name"]}>Outside Dhaka</span>
                     <div className={styles["delivery-zone__details"]}>
                       <span className={styles["delivery-zone__time"]}>3–5 business days</span>
@@ -344,7 +357,7 @@ export default function CheckoutPage() {
             <>
               <div className={styles["checkout-section"]}>
                 <h2 className={styles["checkout-section__title"]}>
-                  <span className={styles["checkout-section__title-icon"]}>💳</span>
+                  <span className={styles["checkout-section__title-icon"]}><CreditCard size={20} /></span>
                   Payment Method
                 </h2>
                 <div className={styles["payment-options"]}>
@@ -353,7 +366,7 @@ export default function CheckoutPage() {
                     onClick={() => setPaymentMethod("cod")}
                   >
                     <div className={styles["payment-option__radio"]} />
-                    <span className={styles["payment-option__icon"]}>💰</span>
+                    <span className={styles["payment-option__icon"]}><Coins size={20} /></span>
                     <div className={styles["payment-option__info"]}>
                       <span className={styles["payment-option__name"]}>Cash on Delivery</span>
                       <span className={styles["payment-option__desc"]}>Pay when you receive your order</span>
@@ -366,7 +379,7 @@ export default function CheckoutPage() {
                     onClick={() => setPaymentMethod("banglaqr")}
                   >
                     <div className={styles["payment-option__radio"]} />
-                    <span className={styles["payment-option__icon"]}>📱</span>
+                    <span className={styles["payment-option__icon"]}><Smartphone size={20} /></span>
                     <div className={styles["payment-option__info"]}>
                       <span className={styles["payment-option__name"]}>BanglaQR</span>
                       <span className={styles["payment-option__desc"]}>Scan QR with any banking app (bKash, Nagad, bank apps)</span>
@@ -378,7 +391,7 @@ export default function CheckoutPage() {
                     onClick={() => setPaymentMethod("bkash")}
                   >
                     <div className={styles["payment-option__radio"]} />
-                    <span className={styles["payment-option__icon"]}>📲</span>
+                    <span className={styles["payment-option__icon"]}><Phone size={20} /></span>
                     <div className={styles["payment-option__info"]}>
                       <span className={styles["payment-option__name"]}>bKash / Nagad</span>
                       <span className={styles["payment-option__desc"]}>Mobile wallet payment</span>
@@ -397,7 +410,9 @@ export default function CheckoutPage() {
                     color: "var(--color-text-tertiary)",
                     fontSize: "var(--text-sm)",
                   }}>
-                    <div style={{ fontSize: "2.5rem", marginBottom: "var(--space-2)" }}>📱</div>
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "var(--space-2)", color: "var(--color-signal-amber)" }}>
+                      <Smartphone size={36} />
+                    </div>
                     QR code will be generated after you place the order.
                     <br />
                     Scan with bKash, Nagad, or any banking app.
@@ -422,7 +437,7 @@ export default function CheckoutPage() {
               {/* Items Review */}
               <div className={styles["checkout-section"]}>
                 <h2 className={styles["checkout-section__title"]}>
-                  <span className={styles["checkout-section__title-icon"]}>📦</span>
+                  <span className={styles["checkout-section__title-icon"]}><Package size={20} /></span>
                   Order Items
                 </h2>
                 <div className={styles["review-items"]}>
@@ -432,7 +447,7 @@ export default function CheckoutPage() {
                         {item.product.images?.[0]?.url ? (
                           <img src={item.product.images[0].url} alt={item.product.name} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--border-radius-sm)" }} />
                         ) : (
-                          <div className={styles["review-item__image-placeholder"]}>📦</div>
+                          <div className={styles["review-item__image-placeholder"]}><Package size={16} /></div>
                         )}
                       </div>
                       <div className={styles["review-item__info"]}>
@@ -450,7 +465,7 @@ export default function CheckoutPage() {
               {/* Shipping Summary */}
               <div className={styles["checkout-section"]}>
                 <h2 className={styles["checkout-section__title"]}>
-                  <span className={styles["checkout-section__title-icon"]}>📍</span>
+                  <span className={styles["checkout-section__title-icon"]}><MapPin size={20} /></span>
                   Shipping Details
                 </h2>
                 <div style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)", lineHeight: "var(--leading-relaxed)" }}>
@@ -468,13 +483,13 @@ export default function CheckoutPage() {
               {/* Payment Summary */}
               <div className={styles["checkout-section"]}>
                 <h2 className={styles["checkout-section__title"]}>
-                  <span className={styles["checkout-section__title-icon"]}>💳</span>
+                  <span className={styles["checkout-section__title-icon"]}><CreditCard size={20} /></span>
                   Payment Method
                 </h2>
-                <div style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)" }}>
-                  {paymentMethod === "cod" && "💰 Cash on Delivery"}
-                  {paymentMethod === "banglaqr" && "📱 BanglaQR"}
-                  {paymentMethod === "bkash" && "📲 bKash / Nagad"}
+                <div style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)", display: "flex", alignItems: "center", gap: "6px" }}>
+                  {paymentMethod === "cod" && <><Coins size={16} /> Cash on Delivery</>}
+                  {paymentMethod === "banglaqr" && <><Smartphone size={16} /> BanglaQR</>}
+                  {paymentMethod === "bkash" && <><Phone size={16} /> bKash / Nagad</>}
                 </div>
               </div>
 
@@ -507,7 +522,7 @@ export default function CheckoutPage() {
                   {item.product.images?.[0]?.url ? (
                     <img src={item.product.images[0].url} alt={item.product.name} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--border-radius-sm)" }} />
                   ) : (
-                    <div className={styles["review-item__image-placeholder"]}>📦</div>
+                    <div className={styles["review-item__image-placeholder"]}><Package size={16} /></div>
                   )}
                 </div>
                 <div className={styles["review-item__info"]}>

@@ -3,9 +3,21 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import styles from "./Home.module.css";
-
 import { useCart } from "@/components/providers/CartContext";
 import { productApi, categoryApi } from "@/lib/api";
+import { 
+  ShieldCheck, 
+  Banknote, 
+  Smartphone, 
+  Truck, 
+  RotateCcw,
+  Headphones, 
+  Home, 
+  Watch, 
+  Plug, 
+  Camera, 
+  Folder 
+} from "lucide-react";
 
 export interface APIProduct {
   id: string;
@@ -61,12 +73,25 @@ const mockHeroSlides = [
   },
 ];
 
+const categoryIconMap: Record<string, any> = {
+  audio: Headphones,
+  "smart-home": Home,
+  wearables: Watch,
+  accessories: Plug,
+  cameras: Camera,
+};
+
+function renderCategoryIcon(slug: string, className?: string) {
+  const IconComponent = categoryIconMap[slug] || Folder;
+  return <IconComponent size={32} className={className} strokeWidth={1.5} />;
+}
+
 const mockCategoryTiles = [
-  { name: "Audio", icon: "🎧", href: "/category/audio", count: "42 products" },
-  { name: "Smart Home", icon: "🏠", href: "/category/smart-home", count: "28 products" },
-  { name: "Wearables", icon: "⌚", href: "/category/wearables", count: "19 products" },
-  { name: "Accessories", icon: "🔌", href: "/category/accessories", count: "65 products" },
-  { name: "Cameras", icon: "📷", href: "/category/cameras", count: "12 products" },
+  { name: "Audio", slug: "audio", href: "/category/audio", count: "42 products" },
+  { name: "Smart Home", slug: "smart-home", href: "/category/smart-home", count: "28 products" },
+  { name: "Wearables", slug: "wearables", href: "/category/wearables", count: "19 products" },
+  { name: "Accessories", slug: "accessories", href: "/category/accessories", count: "65 products" },
+  { name: "Cameras", slug: "cameras", href: "/category/cameras", count: "12 products" },
 ];
 
 const mockNewArrivals = [
@@ -225,17 +250,9 @@ export default function HomePage() {
         }
 
         if (categoriesRes && categoriesRes.categories) {
-          // Map backend categories format to icons
-          const iconMap: Record<string, string> = {
-            audio: "🎧",
-            "smart-home": "🏠",
-            wearables: "⌚",
-            accessories: "🔌",
-            cameras: "📷",
-          };
           const mapped = categoriesRes.categories.map((cat: any) => ({
             name: cat.name,
-            icon: iconMap[cat.slug] || "📦",
+            slug: cat.slug,
             href: `/products?category=${cat.slug}`,
             count: `${cat._count?.products || 0} products`,
           }));
@@ -333,23 +350,23 @@ export default function HomePage() {
       <section className={styles["trust-strip"]} id="trust-strip">
         <div className={`container ${styles["trust-strip__inner"]}`}>
           <div className={styles["trust-strip__item"]}>
-            <span className={styles["trust-strip__icon"]}>✅</span>
+            <span className={styles["trust-strip__icon"]}><ShieldCheck size={20} /></span>
             Authentic Products
           </div>
           <div className={styles["trust-strip__item"]}>
-            <span className={styles["trust-strip__icon"]}>💰</span>
+            <span className={styles["trust-strip__icon"]}><Banknote size={20} /></span>
             Cash on Delivery
           </div>
           <div className={styles["trust-strip__item"]}>
-            <span className={styles["trust-strip__icon"]}>📱</span>
+            <span className={styles["trust-strip__icon"]}><Smartphone size={20} /></span>
             BanglaQR Payment
           </div>
           <div className={styles["trust-strip__item"]}>
-            <span className={styles["trust-strip__icon"]}>🚚</span>
+            <span className={styles["trust-strip__icon"]}><Truck size={20} /></span>
             Nationwide via Pathao
           </div>
           <div className={styles["trust-strip__item"]}>
-            <span className={styles["trust-strip__icon"]}>↩️</span>
+            <span className={styles["trust-strip__icon"]}><RotateCcw size={20} /></span>
             Easy Returns
           </div>
         </div>
@@ -360,7 +377,9 @@ export default function HomePage() {
         <div className={styles.categories__grid}>
           {categories.map((cat) => (
             <Link key={cat.name} href={cat.href} className={styles["category-tile"]}>
-              <span className={styles["category-tile__icon"]}>{cat.icon}</span>
+              <span className={styles["category-tile__icon"]}>
+                {renderCategoryIcon(cat.slug)}
+              </span>
               <span className={styles["category-tile__name"]}>{cat.name}</span>
               <span className={styles["category-tile__count"]}>{cat.count}</span>
             </Link>

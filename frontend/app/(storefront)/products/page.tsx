@@ -10,6 +10,8 @@ import styles from "./ProductListing.module.css";
 /* ── Reuse product card styles from homepage ── */
 import homeStyles from "../Home.module.css";
 
+import { Search } from "lucide-react";
+
 /* ── Icons ── */
 const FilterIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -533,7 +535,7 @@ export default function ProductsPage() {
             </div>
           ) : products.length === 0 ? (
             <div className={styles["listing-empty"]}>
-              <div className={styles["listing-empty__icon"]}>🔍</div>
+              <div className={styles["listing-empty__icon"]}><Search size={48} style={{ opacity: 0.4 }} /></div>
               <h3 className={styles["listing-empty__title"]}>No products found</h3>
               <p className={styles["listing-empty__text"]}>Try adjusting your filters or search terms.</p>
               <button className="btn btn--primary" onClick={clearAllFilters}>Clear Filters</button>

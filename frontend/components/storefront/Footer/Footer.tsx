@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import styles from "./Footer.module.css";
+import { 
+  ShieldCheck, 
+  Banknote, 
+  Smartphone, 
+  Truck, 
+  RotateCcw 
+} from "lucide-react";
 
 export default function Footer() {
   return (
@@ -128,23 +135,23 @@ export default function Footer() {
       <div className={styles.footer__trust}>
         <div className={styles["footer__trust-inner"]}>
           <div className={styles["footer__trust-item"]}>
-            <span className={styles["footer__trust-icon"]}>✅</span>
+            <span className={styles["footer__trust-icon"]}><ShieldCheck size={18} /></span>
             Authentic Products
           </div>
           <div className={styles["footer__trust-item"]}>
-            <span className={styles["footer__trust-icon"]}>💰</span>
+            <span className={styles["footer__trust-icon"]}><Banknote size={18} /></span>
             Cash on Delivery
           </div>
           <div className={styles["footer__trust-item"]}>
-            <span className={styles["footer__trust-icon"]}>📱</span>
+            <span className={styles["footer__trust-icon"]}><Smartphone size={18} /></span>
             BanglaQR Payment
           </div>
           <div className={styles["footer__trust-item"]}>
-            <span className={styles["footer__trust-icon"]}>🚚</span>
+            <span className={styles["footer__trust-icon"]}><Truck size={18} /></span>
             Nationwide Delivery
           </div>
           <div className={styles["footer__trust-item"]}>
-            <span className={styles["footer__trust-icon"]}>↩️</span>
+            <span className={styles["footer__trust-icon"]}><RotateCcw size={18} /></span>
             Easy Returns
           </div>
         </div>

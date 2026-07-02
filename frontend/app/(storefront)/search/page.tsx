@@ -148,7 +148,7 @@ function SearchContent() {
       {/* No Results */}
       {query && results.length === 0 && (
         <div className={styles["search-empty"]}>
-          <div className={styles["search-empty__icon"]}>🔍</div>
+          <div className={styles["search-empty__icon"]}><SearchIcon /></div>
           <h2 className={styles["search-empty__title"]}>No results found</h2>
           <p className={styles["search-empty__text"]}>
             We couldn&apos;t find any products matching &ldquo;{query}&rdquo;. Try a different search term or browse our categories.
@@ -167,7 +167,7 @@ function SearchContent() {
       {/* No query state */}
       {!query && (
         <div className={styles["search-empty"]}>
-          <div className={styles["search-empty__icon"]}>🔎</div>
+          <div className={styles["search-empty__icon"]}><SearchIcon /></div>
           <h2 className={styles["search-empty__title"]}>What are you looking for?</h2>
           <p className={styles["search-empty__text"]}>
             Search by product name, brand, or category. Try the popular searches above to get started.

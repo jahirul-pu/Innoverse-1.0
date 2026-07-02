@@ -27,8 +27,27 @@ import {
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
-  DollarSign
+  DollarSign,
+  Headphones,
+  Home,
+  Watch,
+  Plug,
+  Camera,
+  FolderOpen
 } from "lucide-react";
+
+const categoryIconMap: Record<string, any> = {
+  audio: Headphones,
+  "smart-home": Home,
+  wearables: Watch,
+  accessories: Plug,
+  cameras: Camera,
+};
+
+function renderCategoryIcon(slug: string, className?: string) {
+  const IconComponent = categoryIconMap[slug] || FolderOpen;
+  return <IconComponent size={20} className={className} />;
+}
 
 type AdminView = "dashboard" | "products" | "orders" | "customers" | "categories" | "brands" | "coupons";
 
@@ -985,7 +1004,7 @@ export default function AdminDashboard() {
                         ) : (
                           filteredCategories.map((cat: any) => (
                             <tr key={cat.id}>
-                              <td style={{ fontSize: "var(--text-lg)" }}>{cat.icon || "📁"}</td>
+                              <td>{renderCategoryIcon(cat.slug)}</td>
                               <td style={{ fontWeight: 500 }}>{cat.name}</td>
                               <td className={styles["data-table__mono"]} style={{ fontSize: "var(--text-xs)" }}>{cat.slug}</td>
                               <td style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>{cat.description || "—"}</td>
