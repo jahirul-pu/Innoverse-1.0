@@ -5,7 +5,7 @@ import styles from "./Footer.module.css";
 import { 
   ShieldCheck, 
   Banknote, 
-  Smartphone, 
+  Lock, 
   Truck, 
   RotateCcw 
 } from "lucide-react";
@@ -143,8 +143,8 @@ export default function Footer() {
             Cash on Delivery
           </div>
           <div className={styles["footer__trust-item"]}>
-            <span className={styles["footer__trust-icon"]}><Smartphone size={18} /></span>
-            BanglaQR Payment
+            <span className={styles["footer__trust-icon"]}><Lock size={18} /></span>
+            Secure Payment
           </div>
           <div className={styles["footer__trust-item"]}>
             <span className={styles["footer__trust-icon"]}><Truck size={18} /></span>

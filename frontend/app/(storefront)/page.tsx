@@ -8,7 +8,7 @@ import { productApi, categoryApi } from "@/lib/api";
 import { 
   ShieldCheck, 
   Banknote, 
-  Smartphone, 
+  Lock, 
   Truck, 
   RotateCcw,
   Headphones, 
@@ -358,8 +358,8 @@ export default function HomePage() {
             Cash on Delivery
           </div>
           <div className={styles["trust-strip__item"]}>
-            <span className={styles["trust-strip__icon"]}><Smartphone size={20} /></span>
-            BanglaQR Payment
+            <span className={styles["trust-strip__icon"]}><Lock size={20} /></span>
+            Secure Payment
           </div>
           <div className={styles["trust-strip__item"]}>
             <span className={styles["trust-strip__icon"]}><Truck size={20} /></span>
