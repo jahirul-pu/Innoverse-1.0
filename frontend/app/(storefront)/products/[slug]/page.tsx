@@ -279,7 +279,15 @@ export default function ProductDetailPage() {
               id="add-to-cart-btn"
               onClick={async () => {
                 try {
-                  await addItem(product.id, quantity);
+                  await addItem(product.id, quantity, undefined, {
+                    name: product.name,
+                    slug: product.slug || slug,
+                    price: product.price,
+                    compareAtPrice: product.compareAtPrice,
+                    stock: product.stock,
+                    images: product.images,
+                    brand: product.brand,
+                  });
                   alert("Added to cart!");
                 } catch (err) {
                   console.error(err);
@@ -293,7 +301,15 @@ export default function ProductDetailPage() {
               id="buy-now-btn"
               onClick={async () => {
                 try {
-                  await addItem(product.id, quantity);
+                  await addItem(product.id, quantity, undefined, {
+                    name: product.name,
+                    slug: product.slug || slug,
+                    price: product.price,
+                    compareAtPrice: product.compareAtPrice,
+                    stock: product.stock,
+                    images: product.images,
+                    brand: product.brand,
+                  });
                   window.location.href = "/checkout";
                 } catch (err) {
                   console.error(err);

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useAuth } from "@/components/providers/AuthContext";
 import { useCart } from "@/components/providers/CartContext";
+import CartDrawer from "@/components/storefront/CartDrawer/CartDrawer";
 import styles from "./Header.module.css";
 
 /* ── SVG Icon Components ── */
@@ -123,6 +124,7 @@ export default function Header() {
   const { items: cartItems } = useCart();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const headerRef = useRef<HTMLElement>(null);
@@ -244,6 +246,7 @@ export default function Header() {
             {/* Cart */}
             <button
               className={styles["header__action-btn"]}
+              onClick={() => setCartDrawerOpen(true)}
               aria-label="Shopping cart"
               id="header-cart"
             >
@@ -379,6 +382,9 @@ export default function Header() {
           )}
         </div>
       </nav>
+
+      {/* Cart Drawer */}
+      <CartDrawer isOpen={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
     </>
   );
 }

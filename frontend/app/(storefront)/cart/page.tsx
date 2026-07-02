@@ -2,56 +2,39 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useCart } from "@/components/providers/CartContext";
 import styles from "./Cart.module.css";
-
-interface CartItem {
-  id: number;
-  name: string;
-  brand: string;
-  variant: string;
-  price: number;
-  originalPrice?: number;
-  quantity: number;
-  inStock: boolean;
-  href: string;
-}
-
-const initialCart: CartItem[] = [
-  { id: 1, name: "Wireless ANC Earbuds Pro", brand: "SoundCore", variant: "Midnight Black", price: 2990, originalPrice: 3450, quantity: 1, inStock: true, href: "/products/wireless-anc-earbuds-pro" },
-  { id: 3, name: "Smart LED Strip 5M RGB", brand: "Govee", variant: "5M RGB", price: 1290, originalPrice: 1600, quantity: 2, inStock: true, href: "/products/smart-led-strip" },
-  { id: 6, name: "65W GaN Charger", brand: "Ugreen", variant: "Black, 3-port", price: 1790, quantity: 1, inStock: true, href: "/products/65w-gan-charger" },
-];
 
 function formatBDT(amount: number): string {
   return `৳${amount.toLocaleString("en-BD")}`;
 }
 
 export default function CartPage() {
-  const [cart, setCart] = useState<CartItem[]>(initialCart);
+  const { items, loading, subtotal, updateQuantity, removeItem, clearCart } = useCart();
   const [couponCode, setCouponCode] = useState("");
 
-  const updateQuantity = (id: number, delta: number) => {
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
-      )
-    );
-  };
+  const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
-  const removeItem = (id: number) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalOriginal = cart.reduce(
-    (sum, item) => sum + (item.originalPrice || item.price) * item.quantity,
-    0
-  );
+  // Calculate totals using shared cart data
+  const totalOriginal = items.reduce((sum, item) => {
+    const comparePrice = Number(item.product.compareAtPrice) || Number(item.product.price) || 0;
+    return sum + comparePrice * item.quantity;
+  }, 0);
   const totalDiscount = totalOriginal - subtotal;
   const shippingCost = subtotal > 5000 ? 0 : 60;
   const total = subtotal + shippingCost;
 
-  if (cart.length === 0) {
+  if (loading) {
+    return (
+      <div className={`container ${styles["cart-page"]}`}>
+        <div style={{ textAlign: "center", padding: "var(--space-16)", color: "var(--color-text-tertiary)", fontFamily: "var(--font-data)" }}>
+          Loading cart...
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
     return (
       <div className={`container ${styles["cart-page"]}`}>
         <div className={styles["cart-empty"]}>
@@ -71,74 +54,92 @@ export default function CartPage() {
   return (
     <div className={`container ${styles["cart-page"]}`}>
       <h1 className={styles["cart-page__title"]}>
-        Shopping Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
+        Shopping Cart ({cartCount})
       </h1>
 
       <div className={styles["cart-layout"]}>
         {/* Cart Items */}
         <div className={styles["cart-items"]}>
-          {cart.map((item) => (
-            <div key={item.id} className={styles["cart-item"]} id={`cart-item-${item.id}`}>
-              <Link href={item.href} className={styles["cart-item__image"]}>
-                <div className={styles["cart-item__image-placeholder"]}>📦</div>
-              </Link>
+          {items.map((item) => {
+            const price = Number(item.product.price) || 0;
+            const comparePrice = Number(item.product.compareAtPrice) || 0;
+            const imageUrl = item.product.images?.[0]?.url;
+            const productSlug = item.product.slug;
+            const productHref = productSlug ? `/products/${productSlug}` : "/products";
 
-              <div className={styles["cart-item__details"]}>
-                <Link href={item.href} className={styles["cart-item__name"]}>
-                  {item.name}
+            return (
+              <div key={item.id} className={styles["cart-item"]} id={`cart-item-${item.id}`}>
+                <Link href={productHref} className={styles["cart-item__image"]}>
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={item.product.name} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--border-radius-md)" }} />
+                  ) : (
+                    <div className={styles["cart-item__image-placeholder"]}>📦</div>
+                  )}
                 </Link>
-                <span className={styles["cart-item__variant"]}>
-                  {item.brand} · {item.variant}
-                </span>
-                <span className={`${styles["cart-item__status"]} ${styles["cart-item__status--in-stock"]}`}>
-                  In Stock
-                </span>
 
-                <div className={styles["cart-item__actions"]}>
-                  <div className={styles["cart-item__quantity"]}>
+                <div className={styles["cart-item__details"]}>
+                  <Link href={productHref} className={styles["cart-item__name"]}>
+                    {item.product.name}
+                  </Link>
+                  <span className={styles["cart-item__variant"]}>
+                    {item.product.brand?.name || ""}
+                  </span>
+                  {item.product.stock > 0 && (
+                    <span className={`${styles["cart-item__status"]} ${styles["cart-item__status--in-stock"]}`}>
+                      In Stock
+                    </span>
+                  )}
+
+                  <div className={styles["cart-item__actions"]}>
+                    <div className={styles["cart-item__quantity"]}>
+                      <button
+                        className={styles["cart-item__qty-btn"]}
+                        onClick={() =>
+                          item.quantity > 1
+                            ? updateQuantity(item.id, item.quantity - 1)
+                            : removeItem(item.id)
+                        }
+                      >
+                        −
+                      </button>
+                      <span className={styles["cart-item__qty-value"]}>{item.quantity}</span>
+                      <button
+                        className={styles["cart-item__qty-btn"]}
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
                     <button
-                      className={styles["cart-item__qty-btn"]}
-                      onClick={() => updateQuantity(item.id, -1)}
+                      className={styles["cart-item__remove"]}
+                      onClick={() => removeItem(item.id)}
                     >
-                      −
+                      Remove
                     </button>
-                    <span className={styles["cart-item__qty-value"]}>{item.quantity}</span>
-                    <button
-                      className={styles["cart-item__qty-btn"]}
-                      onClick={() => updateQuantity(item.id, 1)}
-                    >
-                      +
+                    <button className={styles["cart-item__wishlist"]}>
+                      Save for later
                     </button>
                   </div>
-                  <button
-                    className={styles["cart-item__remove"]}
-                    onClick={() => removeItem(item.id)}
-                  >
-                    Remove
-                  </button>
-                  <button className={styles["cart-item__wishlist"]}>
-                    Save for later
-                  </button>
+                </div>
+
+                <div className={styles["cart-item__price-col"]}>
+                  <span className={styles["cart-item__price"]}>
+                    {formatBDT(price * item.quantity)}
+                  </span>
+                  {comparePrice > 0 && comparePrice > price && (
+                    <>
+                      <span className={styles["cart-item__price-original"]}>
+                        {formatBDT(comparePrice * item.quantity)}
+                      </span>
+                      <span className={styles["cart-item__price-saved"]}>
+                        −{formatBDT((comparePrice - price) * item.quantity)}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
-
-              <div className={styles["cart-item__price-col"]}>
-                <span className={styles["cart-item__price"]}>
-                  {formatBDT(item.price * item.quantity)}
-                </span>
-                {item.originalPrice && (
-                  <>
-                    <span className={styles["cart-item__price-original"]}>
-                      {formatBDT(item.originalPrice * item.quantity)}
-                    </span>
-                    <span className={styles["cart-item__price-saved"]}>
-                      −{formatBDT((item.originalPrice - item.price) * item.quantity)}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Order Summary */}
@@ -146,7 +147,7 @@ export default function CartPage() {
           <h2 className={styles["order-summary__title"]}>Order Summary</h2>
 
           <div className={styles["order-summary__row"]}>
-            <span>Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+            <span>Subtotal ({cartCount} items)</span>
             <span className={styles["order-summary__row-value"]}>{formatBDT(subtotal)}</span>
           </div>
 

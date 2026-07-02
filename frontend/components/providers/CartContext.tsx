@@ -21,12 +21,22 @@ export interface CartItem {
   };
 }
 
+export interface ProductDetails {
+  name: string;
+  slug: string;
+  price: number | string;
+  compareAtPrice?: number | string | null;
+  stock: number;
+  images: { url: string; alt?: string | null }[];
+  brand?: { name: string };
+}
+
 interface CartContextType {
   items: CartItem[];
   loading: boolean;
   subtotal: number;
   total: number;
-  addItem: (productId: string, quantity?: number, variantId?: string) => Promise<void>;
+  addItem: (productId: string, quantity?: number, variantId?: string, productDetails?: ProductDetails) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -107,10 +117,8 @@ export function CartContextProvider({ children }: { children: React.ReactNode })
     syncAndRefresh();
   }, [user]);
 
-  const addItem = async (productId: string, quantity = 1, variantId?: string) => {
+  const addItem = async (productId: string, quantity = 1, variantId?: string, productDetails?: ProductDetails) => {
     if (!user) {
-      // Local cart storage mock item structure (real item structure will be fetched by listing, but for guest we store simple info)
-      // For simplicity, guest cart fetch is done locally. Let's build a structured local addition:
       const local = localStorage.getItem("innoverse-cart");
       let currentItems: CartItem[] = [];
       try {
@@ -125,10 +133,20 @@ export function CartContextProvider({ children }: { children: React.ReactNode })
 
       if (existingIndex > -1) {
         currentItems[existingIndex].quantity += quantity;
+        // Update product details if provided (in case they were missing before)
+        if (productDetails) {
+          currentItems[existingIndex].product = {
+            id: productId,
+            name: productDetails.name,
+            slug: productDetails.slug,
+            price: productDetails.price,
+            compareAtPrice: productDetails.compareAtPrice,
+            stock: productDetails.stock,
+            images: productDetails.images,
+            brand: productDetails.brand,
+          };
+        }
       } else {
-        // Construct dummy item (on page refresh it gets populated, or PDP provides real details. 
-        // For guest, let's create a minimal payload. In product details context we can pass full details, 
-        // but simple stub is fine until refresh or checkout)
         const id = Math.random().toString(36).substring(7);
         currentItems.push({
           id,
@@ -137,11 +155,13 @@ export function CartContextProvider({ children }: { children: React.ReactNode })
           variantId: variantId || null,
           product: {
             id: productId,
-            name: "Product", // Will refresh or fetch on checkouts
-            slug: "",
-            price: 0,
-            stock: 99,
-            images: [],
+            name: productDetails?.name || "Product",
+            slug: productDetails?.slug || "",
+            price: productDetails?.price || 0,
+            compareAtPrice: productDetails?.compareAtPrice,
+            stock: productDetails?.stock ?? 99,
+            images: productDetails?.images || [],
+            brand: productDetails?.brand,
           },
         });
       }

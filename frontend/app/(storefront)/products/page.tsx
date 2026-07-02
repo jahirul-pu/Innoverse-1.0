@@ -92,7 +92,15 @@ function ProductCardGrid({ product }: { product: any }) {
             e.preventDefault();
             e.stopPropagation();
             try {
-              await addItem(product.id, 1);
+              await addItem(product.id, 1, undefined, {
+                name: product.name,
+                slug: product.slug,
+                price: product.price,
+                compareAtPrice: product.compareAtPrice,
+                stock: product.stock,
+                images: product.images,
+                brand: product.brand,
+              });
             } catch (err) {
               console.error(err);
             }
@@ -156,7 +164,15 @@ function ProductCardList({ product }: { product: any }) {
               e.preventDefault();
               e.stopPropagation();
               try {
-                await addItem(product.id, 1);
+                await addItem(product.id, 1, undefined, {
+                  name: product.name,
+                  slug: product.slug,
+                  price: product.price,
+                  compareAtPrice: product.compareAtPrice,
+                  stock: product.stock,
+                  images: product.images,
+                  brand: product.brand,
+                });
               } catch (err) {
                 console.error(err);
               }
