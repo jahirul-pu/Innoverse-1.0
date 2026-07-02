@@ -87,6 +87,7 @@ const createProductSchema = z.object({
   brandId: z.string(),
   isFeatured: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
+  warranty: z.string().optional(),
   images: z.array(z.object({
     url: z.string(),
     alt: z.string().optional(),
@@ -128,6 +129,7 @@ adminRoutes.post("/products", async (req: Request, res: Response) => {
       brandId: data.brandId,
       isFeatured: data.isFeatured,
       isNewArrival: data.isNewArrival,
+      warranty: data.warranty,
       images: data.images ? { create: data.images.map((img, i) => ({ ...img, sortOrder: i })) } : undefined,
       specs: data.specs ? { create: data.specs.map((s, i) => ({ ...s, sortOrder: i })) } : undefined,
       variants: data.variants ? { create: data.variants } : undefined,

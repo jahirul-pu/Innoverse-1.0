@@ -131,6 +131,7 @@ model Product {
   isActive         Boolean @default(true)
   isFeatured       Boolean @default(false)
   isNewArrival     Boolean @default(false)
+  warranty         String?
 
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String

@@ -135,6 +135,7 @@ export default function AdminDashboard() {
   const [prodDesc, setProdDesc] = useState("");
   const [prodIsFeatured, setProdIsFeatured] = useState(false);
   const [prodIsNewArrival, setProdIsNewArrival] = useState(false);
+  const [prodWarranty, setProdWarranty] = useState("");
   const [prodImages, setProdImages] = useState<{ url: string; alt?: string | null; isPrimary: boolean }[]>([]);
   const [prodVariants, setProdVariants] = useState<{ name: string; type: string; value: string; priceAdj: number; stock: number }[]>([]);
   const [newVariantName, setNewVariantName] = useState("");
@@ -258,6 +259,7 @@ export default function AdminDashboard() {
     setProdDesc("");
     setProdIsFeatured(false);
     setProdIsNewArrival(false);
+    setProdWarranty("");
     setProdImages([]);
     setProdVariants([]);
     setNewVariantName("");
@@ -287,6 +289,7 @@ export default function AdminDashboard() {
       setProdBrandId(fullProd.brand?.id || fullProd.brandId || "");
       setProdShortDesc(fullProd.shortDescription || "");
       setProdDesc(fullProd.description || "");
+      setProdWarranty(fullProd.warranty || "");
       setProdImages(
         fullProd.images?.map((img: any) => ({
           url: img.url,
@@ -324,6 +327,7 @@ export default function AdminDashboard() {
       setProdBrandId(prod.brand?.id || prod.brandId || "");
       setProdShortDesc(prod.shortDescription || "");
       setProdDesc(prod.description || "");
+      setProdWarranty(prod.warranty || "");
       setProdImages(
         prod.images?.map((img: any) => ({
           url: img.url,
@@ -359,6 +363,7 @@ export default function AdminDashboard() {
         description: prodDesc,
         isFeatured: prodIsFeatured,
         isNewArrival: prodIsNewArrival,
+        warranty: prodWarranty,
         images: prodImages,
         variants: prodVariants
       };
@@ -1339,6 +1344,10 @@ export default function AdminDashboard() {
                   <div className={styles["form-group"]}>
                     <label className="label">SKU (Stock Keeping Unit, optional)</label>
                     <input type="text" className="input" value={prodSku} onChange={(e) => setProdSku(e.target.value)} />
+                  </div>
+                  <div className={styles["form-group"]}>
+                    <label className="label">Warranty Period (e.g. 1 Year, 6 Months)</label>
+                    <input type="text" className="input" placeholder="e.g. 1 Year" value={prodWarranty} onChange={(e) => setProdWarranty(e.target.value)} />
                   </div>
                   <div className={styles["form-group"]}>
                     <label className="label">Stock Quantity</label>

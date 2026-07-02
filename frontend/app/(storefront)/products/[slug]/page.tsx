@@ -37,6 +37,12 @@ const CartPlusIcon = () => (
   </svg>
 );
 
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, marginRight: 4, verticalAlign: "middle" }}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
 /* ── Mock Product Data Fallback ── */
 const mockFallbackProduct = {
   id: "mock-id-1",
@@ -229,10 +235,17 @@ export default function ProductDetailPage() {
             </span>
           </div>
 
-          {/* SKU */}
-          <span className="data-text" style={{ fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>
-            SKU: {product.sku}
-          </span>
+          {/* SKU & Warranty */}
+          <div style={{ display: "flex", gap: "var(--space-4)", alignItems: "center", marginTop: "var(--space-1)", marginBottom: "var(--space-2)" }}>
+            <span className="data-text" style={{ fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>
+              SKU: {product.sku}
+            </span>
+            {product.warranty && (
+              <span className="data-text" style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "flex", alignItems: "center" }}>
+                <ShieldIcon /> Warranty: <strong style={{ marginLeft: "4px" }}>{product.warranty}</strong>
+              </span>
+            )}
+          </div>
 
           {/* Pricing */}
           <div className={styles.pdp__pricing}>
