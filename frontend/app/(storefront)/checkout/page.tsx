@@ -1,29 +1,177 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/components/providers/CartContext";
+import { useAuth } from "@/components/providers/AuthContext";
+import { orderApi } from "@/lib/api";
 import styles from "./Checkout.module.css";
 import cartStyles from "../cart/Cart.module.css";
-
-/* ── Mock Order Items ── */
-const orderItems = [
-  { id: 1, name: "Wireless ANC Earbuds Pro", qty: 1, price: 2990 },
-  { id: 3, name: "Smart LED Strip 5M RGB", qty: 2, price: 1290 },
-  { id: 6, name: "65W GaN Charger", qty: 1, price: 1790 },
-];
 
 function formatBDT(amount: number) {
   return `৳${amount.toLocaleString("en-BD")}`;
 }
 
 export default function CheckoutPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { items, subtotal, clearCart, loading: cartLoading } = useCart();
+
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [deliveryZone, setDeliveryZone] = useState<"dhaka" | "outside">("dhaka");
 
-  const subtotal = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
+  // Form Field States
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [district, setDistrict] = useState("");
+  const [address, setAddress] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [placedOrder, setPlacedOrder] = useState<any>(null);
+
+  // Pre-fill user profile fields if available
+  useEffect(() => {
+    if (user) {
+      setFullName(user.name || "");
+      setPhone(user.phone?.replace("+880", "") || "");
+      setEmail(user.email || "");
+      if (user.addresses && user.addresses.length > 0) {
+        const addr = user.addresses[0];
+        setFullName(addr.fullName || user.name || "");
+        setPhone(addr.phone?.replace("+880", "") || user.phone?.replace("+880", "") || "");
+        setDistrict(addr.district || "");
+        setAddress(addr.address || "");
+        setDeliveryZone(addr.district === "dhaka" ? "dhaka" : "outside");
+      }
+    }
+  }, [user]);
+
   const shippingCost = deliveryZone === "dhaka" ? 60 : 120;
   const total = subtotal + shippingCost;
+
+  // Handle Step 1 Validation
+  const handleContinueToPayment = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setOrderError(null);
+    if (!fullName.trim() || !phone.trim() || !district || !address.trim()) {
+      setOrderError("Please fill out all required fields (*).");
+      return;
+    }
+    setStep(2);
+  };
+
+  // Handle Place Order
+  const handlePlaceOrder = async () => {
+    try {
+      setPlacingOrder(true);
+      setOrderError(null);
+
+      const formattedPhone = phone.startsWith("0") ? phone : "0" + phone;
+
+      const orderPayload: any = {
+        addressData: {
+          fullName,
+          phone: formattedPhone,
+          district,
+          address,
+        },
+        paymentMethod: paymentMethod.toUpperCase() as any,
+        deliveryZone,
+        notes: notes || undefined,
+      };
+
+      const res = await orderApi.create(orderPayload);
+      if (res && res.order) {
+        setPlacedOrder(res.order);
+        clearCart(); // clear cart on success
+      } else {
+        throw new Error("Failed to create order");
+      }
+    } catch (err: any) {
+      console.error("Order creation error:", err);
+      setOrderError(err.message || "Failed to place order. Please try again.");
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
+  if (authLoading || cartLoading) {
+    return (
+      <div className="container" style={{ textAlign: "center", padding: "100px 0", color: "var(--color-text-tertiary)", fontFamily: "var(--font-data)" }}>
+        Loading checkout details...
+      </div>
+    );
+  }
+
+  // If not logged in, request login first
+  if (!user) {
+    return (
+      <div style={{ maxWidth: 500, margin: "100px auto", padding: "var(--space-6)", backgroundColor: "var(--color-surface)", border: "var(--border-hairline)", borderRadius: "var(--border-radius-md)", textAlign: "center" }}>
+        <h2 style={{ marginBottom: "var(--space-4)" }}>🔒 Checkout Required Sign In</h2>
+        <p style={{ color: "var(--color-text-secondary)", marginBottom: "var(--space-6)", fontSize: "var(--text-sm)" }}>
+          Please log in or create an account to complete your purchase.
+        </p>
+        <Link href={`/auth?redirect=/checkout`} className="btn btn--primary btn--lg btn--block">
+          Login / Register
+        </Link>
+      </div>
+    );
+  }
+
+  // If cart is empty and order is not placed yet
+  if (items.length === 0 && !placedOrder) {
+    return (
+      <div className="container" style={{ textAlign: "center", padding: "100px 0" }}>
+        <h2>Your cart is empty</h2>
+        <p style={{ color: "var(--color-text-tertiary)", marginTop: "var(--space-2)" }}>Add some products to cart before checking out.</p>
+        <Link href="/products" className="btn btn--primary" style={{ marginTop: "var(--space-4)" }}>Browse Products</Link>
+      </div>
+    );
+  }
+
+  // Order Success Screen
+  if (placedOrder) {
+    return (
+      <div className="container" style={{ maxWidth: 600, margin: "60px auto", padding: "var(--space-8)", backgroundColor: "var(--color-surface)", border: "var(--border-hairline)", borderRadius: "var(--border-radius-md)", textAlign: "center" }}>
+        <div style={{ fontSize: "4rem", marginBottom: "var(--space-4)" }}>🎉</div>
+        <h2 style={{ marginBottom: "var(--space-2)" }}>Order Placed Successfully!</h2>
+        <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>
+          Thank you for your purchase. Your order number is{" "}
+          <strong style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-data)" }}>
+            {placedOrder.orderNumber}
+          </strong>
+        </p>
+        <div style={{
+          margin: "var(--space-6) 0",
+          padding: "var(--space-4)",
+          background: "var(--color-bg)",
+          borderRadius: "var(--border-radius-md)",
+          textAlign: "left",
+          fontSize: "var(--text-sm)"
+        }}>
+          <h4 style={{ marginBottom: "var(--space-2)" }}>Delivery Address</h4>
+          <p style={{ color: "var(--color-text-secondary)" }}>
+            {fullName}<br />
+            {phone}<br />
+            {address}, {district}
+          </p>
+          <h4 style={{ marginTop: "var(--space-4)", marginBottom: "var(--space-2)" }}>Payment Summary</h4>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--color-text-secondary)" }}>Total Paid (COD):</span>
+            <strong>{formatBDT(total)}</strong>
+          </div>
+        </div>
+        <Link href="/" className="btn btn--primary btn--lg btn--block">
+          Continue Shopping
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className={`container ${styles["checkout-page"]}`}>
@@ -59,6 +207,20 @@ export default function CheckoutPage() {
         ))}
       </div>
 
+      {orderError && (
+        <div style={{
+          color: "#ff4d4d",
+          backgroundColor: "rgba(255, 77, 77, 0.1)",
+          padding: "var(--space-3)",
+          borderRadius: "var(--border-radius-md)",
+          fontSize: "var(--text-sm)",
+          marginBottom: "var(--space-4)",
+          border: "1px solid rgba(255, 77, 77, 0.2)"
+        }}>
+          {orderError}
+        </div>
+      )}
+
       <div className={styles["checkout-layout"]}>
         {/* Main Form Area */}
         <div>
@@ -75,23 +237,32 @@ export default function CheckoutPage() {
                     <label className={styles["form-label"]}>
                       Full Name <span className={styles["form-label__required"]}>*</span>
                     </label>
-                    <input type="text" className={styles["form-input"]} placeholder="Enter your full name" id="shipping-name" />
+                    <input type="text" className={styles["form-input"]} placeholder="Enter your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} id="shipping-name" />
                   </div>
                   <div className={styles["form-group"]}>
                     <label className={styles["form-label"]}>
                       Phone Number <span className={styles["form-label__required"]}>*</span>
                     </label>
-                    <input type="tel" className={styles["form-input"]} placeholder="01XXXXXXXXX" id="shipping-phone" />
+                    <input type="tel" className={styles["form-input"]} placeholder="01XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} id="shipping-phone" />
                   </div>
                   <div className={styles["form-group"]}>
                     <label className={styles["form-label"]}>Email (optional)</label>
-                    <input type="email" className={styles["form-input"]} placeholder="your@email.com" id="shipping-email" />
+                    <input type="email" className={styles["form-input"]} placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} id="shipping-email" />
                   </div>
                   <div className={styles["form-group"]}>
                     <label className={styles["form-label"]}>
                       District <span className={styles["form-label__required"]}>*</span>
                     </label>
-                    <select className={styles["form-select"]} id="shipping-district">
+                    <select
+                      className={styles["form-select"]}
+                      value={district}
+                      onChange={(e) => {
+                        const dist = e.target.value;
+                        setDistrict(dist);
+                        setDeliveryZone(dist === "dhaka" ? "dhaka" : "outside");
+                      }}
+                      id="shipping-district"
+                    >
                       <option value="">Select district</option>
                       <option value="dhaka">Dhaka</option>
                       <option value="chittagong">Chittagong</option>
@@ -110,6 +281,8 @@ export default function CheckoutPage() {
                     <textarea
                       className={styles["form-textarea"]}
                       placeholder="House no, Road no, Area, City"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
                       id="shipping-address"
                     />
                   </div>
@@ -118,6 +291,8 @@ export default function CheckoutPage() {
                     <textarea
                       className={styles["form-textarea"]}
                       placeholder="Special delivery instructions..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
                       id="shipping-notes"
                     />
                   </div>
@@ -133,7 +308,10 @@ export default function CheckoutPage() {
                 <div className={styles["delivery-zones"]}>
                   <div
                     className={`${styles["delivery-zone"]} ${deliveryZone === "dhaka" ? styles["delivery-zone--active"] : ""}`}
-                    onClick={() => setDeliveryZone("dhaka")}
+                    onClick={() => {
+                      setDeliveryZone("dhaka");
+                      setDistrict("dhaka");
+                    }}
                   >
                     <span className={styles["delivery-zone__icon"]}>🏙️</span>
                     <span className={styles["delivery-zone__name"]}>Inside Dhaka</span>
@@ -144,7 +322,10 @@ export default function CheckoutPage() {
                   </div>
                   <div
                     className={`${styles["delivery-zone"]} ${deliveryZone === "outside" ? styles["delivery-zone--active"] : ""}`}
-                    onClick={() => setDeliveryZone("outside")}
+                    onClick={() => {
+                      setDeliveryZone("outside");
+                      if (district === "dhaka") setDistrict("");
+                    }}
                   >
                     <span className={styles["delivery-zone__icon"]}>🌏</span>
                     <span className={styles["delivery-zone__name"]}>Outside Dhaka</span>
@@ -157,7 +338,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className={styles["checkout-actions"]}>
-                <button className="btn btn--primary btn--lg btn--block" onClick={() => setStep(2)} id="to-payment-btn">
+                <button className="btn btn--primary btn--lg btn--block" onClick={handleContinueToPayment} id="to-payment-btn">
                   Continue to Payment
                 </button>
                 <Link href="/cart" className="btn btn--secondary btn--lg btn--block" style={{ textAlign: "center" }}>
@@ -254,17 +435,21 @@ export default function CheckoutPage() {
                   Order Items
                 </h2>
                 <div className={styles["review-items"]}>
-                  {orderItems.map((item) => (
+                  {items.map((item) => (
                     <div key={item.id} className={styles["review-item"]}>
                       <div className={styles["review-item__image"]}>
-                        <div className={styles["review-item__image-placeholder"]}>📦</div>
+                        {item.product.images?.[0]?.url ? (
+                          <img src={item.product.images[0].url} alt={item.product.name} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--border-radius-sm)" }} />
+                        ) : (
+                          <div className={styles["review-item__image-placeholder"]}>📦</div>
+                        )}
                       </div>
                       <div className={styles["review-item__info"]}>
-                        <div className={styles["review-item__name"]}>{item.name}</div>
-                        <div className={styles["review-item__qty"]}>Qty: {item.qty}</div>
+                        <div className={styles["review-item__name"]}>{item.product.name}</div>
+                        <div className={styles["review-item__qty"]}>Qty: {item.quantity}</div>
                       </div>
                       <div className={styles["review-item__price"]}>
-                        {formatBDT(item.price * item.qty)}
+                        {formatBDT((Number(item.product.price) || 0) * item.quantity)}
                       </div>
                     </div>
                   ))}
@@ -303,8 +488,8 @@ export default function CheckoutPage() {
               </div>
 
               <div className={styles["checkout-actions"]}>
-                <button className="btn btn--primary btn--lg btn--block" id="place-order-btn">
-                  Place Order — {formatBDT(total)}
+                <button className="btn btn--primary btn--lg btn--block" id="place-order-btn" onClick={handlePlaceOrder} disabled={placingOrder}>
+                  {placingOrder ? "Placing Order..." : `Place Order — ${formatBDT(total)}`}
                 </button>
                 <p className={styles["checkout-actions__terms"]}>
                   By placing this order, you agree to our{" "}
@@ -325,17 +510,21 @@ export default function CheckoutPage() {
 
           {/* Mini items list */}
           <div className={styles["review-items"]}>
-            {orderItems.map((item) => (
+            {items.map((item) => (
               <div key={item.id} className={styles["review-item"]}>
                 <div className={styles["review-item__image"]}>
-                  <div className={styles["review-item__image-placeholder"]}>📦</div>
+                  {item.product.images?.[0]?.url ? (
+                    <img src={item.product.images[0].url} alt={item.product.name} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "var(--border-radius-sm)" }} />
+                  ) : (
+                    <div className={styles["review-item__image-placeholder"]}>📦</div>
+                  )}
                 </div>
                 <div className={styles["review-item__info"]}>
-                  <div className={styles["review-item__name"]}>{item.name}</div>
-                  <div className={styles["review-item__qty"]}>×{item.qty}</div>
+                  <div className={styles["review-item__name"]}>{item.product.name}</div>
+                  <div className={styles["review-item__qty"]}>×{item.quantity}</div>
                 </div>
                 <div className={styles["review-item__price"]}>
-                  {formatBDT(item.price * item.qty)}
+                  {formatBDT((Number(item.product.price) || 0) * item.quantity)}
                 </div>
               </div>
             ))}

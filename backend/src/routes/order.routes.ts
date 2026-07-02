@@ -15,7 +15,13 @@ function generateOrderNumber(): string {
 // ── Create Order (from cart) ────────────────────────────────
 // POST /api/orders
 const createOrderSchema = z.object({
-  addressId: z.string(),
+  addressId: z.string().optional(),
+  addressData: z.object({
+    fullName: z.string(),
+    phone: z.string(),
+    district: z.string(),
+    address: z.string(),
+  }).optional(),
   paymentMethod: z.enum(["COD", "BANGLAQR", "BKASH", "NAGAD"]),
   deliveryZone: z.enum(["dhaka", "outside"]),
   notes: z.string().optional(),
@@ -23,16 +29,33 @@ const createOrderSchema = z.object({
 });
 
 orderRoutes.post("/", requireAuth, async (req: Request, res: Response) => {
-  const { addressId, paymentMethod, deliveryZone, notes, couponCode } =
+  const { addressId, addressData, paymentMethod, deliveryZone, notes, couponCode } =
     createOrderSchema.parse(req.body);
 
-  // Verify address belongs to user
-  const address = await prisma.address.findFirst({
-    where: { id: addressId, userId: req.user!.id },
-  });
+  let addressIdToUse = addressId;
 
-  if (!address) {
-    return res.status(404).json({ error: "Address not found" });
+  if (addressData) {
+    const newAddress = await prisma.address.create({
+      data: {
+        fullName: addressData.fullName,
+        phone: addressData.phone,
+        district: addressData.district,
+        address: addressData.address,
+        userId: req.user!.id,
+      },
+    });
+    addressIdToUse = newAddress.id;
+  } else if (addressIdToUse) {
+    // Verify address belongs to user
+    const address = await prisma.address.findFirst({
+      where: { id: addressIdToUse, userId: req.user!.id },
+    });
+
+    if (!address) {
+      return res.status(404).json({ error: "Address not found" });
+    }
+  } else {
+    return res.status(400).json({ error: "Either addressId or addressData must be provided" });
   }
 
   // Get cart items
@@ -133,7 +156,7 @@ orderRoutes.post("/", requireAuth, async (req: Request, res: Response) => {
       data: {
         orderNumber,
         userId: req.user!.id,
-        addressId,
+        addressId: addressIdToUse!,
         paymentMethod: paymentMethod as any,
         deliveryZone,
         subtotal,
