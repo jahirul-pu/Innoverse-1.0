@@ -95,6 +95,29 @@ export default function AdminDashboard() {
   // Auth check bypassed for development
   const isAdmin = true;
 
+  // Dark mode theme state
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("admin-theme") as "light" | "dark" | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute("data-theme", savedTheme);
+    } else {
+      const current = document.documentElement.getAttribute("data-theme") as "light" | "dark" | null;
+      if (current) {
+        setTheme(current);
+      }
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    localStorage.setItem("admin-theme", nextTheme);
+  };
+
   // Fetch admin dashboard details
   async function loadAdminData() {
     if (!isAdmin) return;
@@ -630,6 +653,9 @@ export default function AdminDashboard() {
             <button className={styles["admin-topbar__icon-btn"]} aria-label="Notifications" onClick={() => alert("No notifications.")}>
               🔔
               {lowStockProducts.length > 0 && <span className={styles["admin-topbar__notif-dot"]} />}
+            </button>
+            <button className={styles["admin-topbar__icon-btn"]} aria-label="Toggle Theme" onClick={toggleTheme}>
+              {theme === "dark" ? "☀️" : "🌙"}
             </button>
           </div>
         </div>
