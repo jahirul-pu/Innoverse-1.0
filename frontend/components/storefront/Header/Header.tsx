@@ -128,10 +128,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link href="/" className={styles.header__logo} id="header-logo">
-            <div className={styles["header__logo-icon"]}>I</div>
-            <div className={styles["header__logo-text"]}>
-              Inno<span>verse</span>
-            </div>
+            <img src="/logo.jpg" alt="Innoverse Technology Logo" className={styles["header__logo-img"]} />
           </Link>
 
           {/* Search Bar — hidden on mobile, shown tablet+ */}
@@ -247,10 +244,7 @@ export default function Header() {
       >
         <div className={styles["mobile-nav__header"]}>
           <Link href="/" className={styles.header__logo} onClick={() => setMobileNavOpen(false)}>
-            <div className={styles["header__logo-icon"]}>I</div>
-            <div className={styles["header__logo-text"]}>
-              Inno<span>verse</span>
-            </div>
+            <img src="/logo.jpg" alt="Innoverse Technology Logo" className={styles["header__logo-img"]} />
           </Link>
           <button
             className={styles["mobile-nav__close"]}

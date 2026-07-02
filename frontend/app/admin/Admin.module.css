@@ -34,6 +34,16 @@
   height: var(--admin-header-height);
 }
 
+.admin-sidebar__logo-img {
+  height: 32px;
+  width: auto;
+  display: block;
+  background-color: #ffffff;
+  padding: 3px;
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
 .admin-sidebar__logo-icon {
   width: 32px;
   height: 32px;

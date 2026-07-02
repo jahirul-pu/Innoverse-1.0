@@ -18,10 +18,7 @@ export default function Footer() {
         {/* Brand Column */}
         <div className={styles.footer__brand}>
           <Link href="/" className={styles.footer__logo}>
-            <div className={styles["footer__logo-icon"]}>I</div>
-            <div className={styles["footer__logo-text"]}>
-              Inno<span>verse</span>
-            </div>
+            <img src="/logo.jpg" alt="Innoverse Technology Logo" className={styles["footer__logo-img"]} />
           </Link>
           <p className={styles.footer__description}>
             Your trusted source for authentic gadgets and electronics in

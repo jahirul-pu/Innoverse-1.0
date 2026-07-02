@@ -51,6 +51,16 @@
   flex-shrink: 0;
 }
 
+.header__logo-img {
+  height: 38px;
+  width: auto;
+  display: block;
+  background-color: #ffffff;
+  padding: 4px;
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
 .header__logo-icon {
   width: 32px;
   height: 32px;

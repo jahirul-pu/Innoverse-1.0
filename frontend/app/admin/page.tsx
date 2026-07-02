@@ -684,10 +684,7 @@ export default function AdminDashboard() {
       {/* ── Sidebar ── */}
       <aside className={styles["admin-sidebar"]}>
         <div className={styles["admin-sidebar__header"]}>
-          <div className={styles["admin-sidebar__logo-icon"]}>I</div>
-          <div className={styles["admin-sidebar__logo-text"]}>
-            Inno<span>verse</span>
-          </div>
+          <img src="/logo.jpg" alt="Innoverse Technology Logo" className={styles["admin-sidebar__logo-img"]} />
           <span className={styles["admin-sidebar__badge"]}>Admin</span>
         </div>
 
