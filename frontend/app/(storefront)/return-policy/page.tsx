@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldAlert, ArrowLeft, ArrowRight, HelpCircle, PhoneCall } from "lucide-react";
+import { ShieldAlert, ArrowRight, HelpCircle, PhoneCall } from "lucide-react";
 import styles from "./ReturnPolicy.module.css";
 
 export const metadata = {
@@ -27,40 +27,14 @@ export default function ReturnPolicyPage() {
 
       {/* Header */}
       <header className={styles.header}>
-        <h1 className={styles.title}>Return & Warranty Policy</h1>
+        <h1 className={styles.title}>Return Policy</h1>
         <p className={styles.subtitle}>
           At Innoverse Technologies, we prioritize authenticity and customer satisfaction. Please read our guidelines on order acceptance, exchanges, and warranty claims below.
         </p>
       </header>
 
-      {/* Layout */}
+      {/* Main Layout */}
       <div className={styles.layout}>
-        {/* Left Side: Metadata Specs Sheet */}
-        <aside className={styles.metaSheet}>
-          <h3 className={styles.metaTitle}>Document Control</h3>
-          <div className={styles.metaRow}>
-            <span className={styles.metaLabel}>Ref ID</span>
-            <span className={styles.metaValue}>INNO-RP-2026</span>
-          </div>
-          <div className={styles.metaRow}>
-            <span className={styles.metaLabel}>Last Updated</span>
-            <span className={styles.metaValue}>{currentDate}</span>
-          </div>
-          <div className={styles.metaRow}>
-            <span className={styles.metaLabel}>Status</span>
-            <span className={styles.metaValue} style={{ color: "var(--color-circuit-green)" }}>ACTIVE</span>
-          </div>
-          <div className={styles.metaRow}>
-            <span className={styles.metaLabel}>Scope</span>
-            <span className={styles.metaValue}>Bangladesh (Nationwide)</span>
-          </div>
-          <div className={styles.metaRow}>
-            <span className={styles.metaLabel}>Partner</span>
-            <span className={styles.metaValue}>Pathao Delivery</span>
-          </div>
-        </aside>
-
-        {/* Right Side: Policy Content */}
         <main className={styles.contentBlock}>
           {/* Summary Box */}
           <div className={styles.summaryBox}>
@@ -203,6 +177,11 @@ export default function ReturnPolicyPage() {
               <PhoneCall size={16} /> Contact Support <ArrowRight size={14} />
             </Link>
           </div>
+
+          {/* Policy Footer Note */}
+          <p style={{ marginTop: "var(--space-8)", fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)", lineHeight: "var(--leading-relaxed)", fontFamily: "var(--font-data)" }}>
+            Last updated: {currentDate}. This policy may be updated from time to time; the version shown on our website at the time of your order applies to that order.
+          </p>
         </main>
       </div>
     </div>

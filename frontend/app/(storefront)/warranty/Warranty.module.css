@@ -10,6 +10,9 @@
   margin-bottom: var(--space-10);
   border-bottom: 2px solid var(--color-border);
   padding-bottom: var(--space-6);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .title {
@@ -23,68 +26,16 @@
 .subtitle {
   font-size: var(--text-md);
   color: var(--color-text-secondary);
-  max-width: 800px;
   line-height: var(--leading-relaxed);
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: var(--space-10);
-  align-items: start;
+  display: block;
 }
 
-@media (max-width: 992px) {
-  .layout {
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
-  }
-}
-
-/* Sidebar Metadata Sheet */
-.metaSheet {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  padding: var(--space-5);
-  font-family: var(--font-data);
-  font-size: var(--text-xs);
-}
-
-.metaTitle {
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-4);
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--color-border-light);
-  padding-bottom: var(--space-2);
-  letter-spacing: 0.05em;
-}
-
-.metaRow {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space-2) 0;
-  border-bottom: 1px dashed var(--color-border-light);
-}
-
-.metaRow:last-child {
-  border-bottom: none;
-}
-
-.metaLabel {
-  color: var(--color-text-tertiary);
-}
-
-.metaValue {
-  color: var(--color-text-primary);
-  font-weight: var(--weight-medium);
-}
-
-/* Policy Content */
 .contentBlock {
+  max-width: 800px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
