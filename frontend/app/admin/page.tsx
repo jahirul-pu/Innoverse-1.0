@@ -1256,15 +1256,14 @@ export default function AdminDashboard() {
       {productModalOpen && (
         <>
           <div className="overlay overlay--visible" onClick={() => setProductModalOpen(false)} style={{ zIndex: 999 }} />
-          <div className={styles.modal}>
+          <form onSubmit={handleProductSave} className={styles.modal}>
             <div className={styles.modal__header}>
               <h3 className={styles.modal__title}>
                 {editingProduct ? "Edit Product Settings" : "Create New Product Catalog"}
               </h3>
               <button className={styles.modal__close} onClick={() => setProductModalOpen(false)}>×</button>
             </div>
-            <form onSubmit={handleProductSave}>
-              <div className={styles.modal__body}>
+            <div className={styles.modal__body}>
                 <div className={styles["form-grid"]}>
                   <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
                     <label className="label">Product Name</label>
@@ -1421,23 +1420,21 @@ export default function AdminDashboard() {
                 <button type="button" className="btn btn--secondary" onClick={() => setProductModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn btn--primary">Save Product</button>
               </div>
-            </form>
-          </div>
+          </form>
         </>
       )}
       {/* ── Add / Edit Category Modal ── */}
       {catModalOpen && (
         <>
           <div className="overlay overlay--visible" onClick={() => setCatModalOpen(false)} style={{ zIndex: 999 }} />
-          <div className={styles.modal}>
+          <form onSubmit={handleCatSave} className={styles.modal}>
             <div className={styles.modal__header}>
               <h3 className={styles.modal__title}>
                 {editingCat ? "Edit Category" : "Create New Category"}
               </h3>
               <button className={styles.modal__close} onClick={() => setCatModalOpen(false)}>×</button>
             </div>
-            <form onSubmit={handleCatSave}>
-              <div className={styles.modal__body}>
+            <div className={styles.modal__body}>
                 <div className={styles["form-grid"]}>
                   <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
                     <label className="label">Category Name</label>
@@ -1457,8 +1454,7 @@ export default function AdminDashboard() {
                 <button type="button" className="btn btn--secondary" onClick={() => setCatModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn btn--primary">Save Category</button>
               </div>
-            </form>
-          </div>
+          </form>
         </>
       )}
 
@@ -1466,15 +1462,14 @@ export default function AdminDashboard() {
       {brandModalOpen && (
         <>
           <div className="overlay overlay--visible" onClick={() => setBrandModalOpen(false)} style={{ zIndex: 999 }} />
-          <div className={styles.modal}>
+          <form onSubmit={handleBrandSave} className={styles.modal}>
             <div className={styles.modal__header}>
               <h3 className={styles.modal__title}>
                 {editingBrand ? "Edit Brand" : "Create New Brand"}
               </h3>
               <button className={styles.modal__close} onClick={() => setBrandModalOpen(false)}>×</button>
             </div>
-            <form onSubmit={handleBrandSave}>
-              <div className={styles.modal__body}>
+            <div className={styles.modal__body}>
                 <div className={styles["form-grid"]}>
                   <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
                     <label className="label">Brand Name</label>
@@ -1490,8 +1485,7 @@ export default function AdminDashboard() {
                 <button type="button" className="btn btn--secondary" onClick={() => setBrandModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn btn--primary">Save Brand</button>
               </div>
-            </form>
-          </div>
+          </form>
         </>
       )}
 
@@ -1499,15 +1493,14 @@ export default function AdminDashboard() {
       {couponModalOpen && (
         <>
           <div className="overlay overlay--visible" onClick={() => setCouponModalOpen(false)} style={{ zIndex: 999 }} />
-          <div className={styles.modal}>
+          <form onSubmit={handleCouponSave} className={styles.modal}>
             <div className={styles.modal__header}>
               <h3 className={styles.modal__title}>
                 {editingCoupon ? "Edit Coupon" : "Create New Coupon"}
               </h3>
               <button className={styles.modal__close} onClick={() => setCouponModalOpen(false)}>×</button>
             </div>
-            <form onSubmit={handleCouponSave}>
-              <div className={styles.modal__body}>
+            <div className={styles.modal__body}>
                 <div className={styles["form-grid"]}>
                   <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
                     <label className="label">Coupon Code</label>
@@ -1546,8 +1539,7 @@ export default function AdminDashboard() {
                 <button type="button" className="btn btn--secondary" onClick={() => setCouponModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn btn--primary">Save Coupon</button>
               </div>
-            </form>
-          </div>
+          </form>
         </>
       )}
     </div>
