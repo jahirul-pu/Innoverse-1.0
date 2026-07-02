@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import prisma from "../lib/prisma";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, optionalAuth } from "../middleware/auth";
 import { z } from "zod";
 
 export const orderRoutes = Router();
@@ -26,11 +26,40 @@ const createOrderSchema = z.object({
   deliveryZone: z.enum(["dhaka", "outside"]),
   notes: z.string().optional(),
   couponCode: z.string().optional(),
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive(),
+    variantId: z.string().optional(),
+  })).optional(),
 });
 
-orderRoutes.post("/", requireAuth, async (req: Request, res: Response) => {
-  const { addressId, addressData, paymentMethod, deliveryZone, notes, couponCode } =
+orderRoutes.post("/", optionalAuth, async (req: Request, res: Response) => {
+  const { addressId, addressData, paymentMethod, deliveryZone, notes, couponCode, items } =
     createOrderSchema.parse(req.body);
+
+  let userId: string;
+
+  if (req.user) {
+    userId = req.user.id;
+  } else {
+    // Guest checkout: look up or create user automatically by phone number in addressData!
+    if (!addressData || !addressData.phone) {
+      return res.status(400).json({ error: "Phone number is required for guest checkout" });
+    }
+    const formattedPhone = addressData.phone.startsWith("0") ? addressData.phone : "0" + addressData.phone;
+    
+    let user = await prisma.user.findUnique({ where: { phone: formattedPhone } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          phone: formattedPhone,
+          name: addressData.fullName,
+          role: "CUSTOMER",
+        }
+      });
+    }
+    userId = user.id;
+  }
 
   let addressIdToUse = addressId;
 
@@ -41,14 +70,14 @@ orderRoutes.post("/", requireAuth, async (req: Request, res: Response) => {
         phone: addressData.phone,
         district: addressData.district,
         address: addressData.address,
-        userId: req.user!.id,
+        userId: userId,
       },
     });
     addressIdToUse = newAddress.id;
   } else if (addressIdToUse) {
     // Verify address belongs to user
     const address = await prisma.address.findFirst({
-      where: { id: addressIdToUse, userId: req.user!.id },
+      where: { id: addressIdToUse, userId: userId },
     });
 
     if (!address) {
@@ -58,62 +87,67 @@ orderRoutes.post("/", requireAuth, async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Either addressId or addressData must be provided" });
   }
 
-  // Get cart items
-  const cart = await prisma.cart.findUnique({
-    where: { userId: req.user!.id },
-    include: {
-      items: {
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              price: true,
-              stock: true,
-              variants: true,
-            },
-          },
-        },
-      },
-    },
+  // Get order items from payload or database cart
+  let rawItems: Array<{ productId: string; quantity: number; variantId?: string | null }> = [];
+
+  if (items && items.length > 0) {
+    rawItems = items;
+  } else {
+    if (!req.user) {
+      return res.status(400).json({ error: "Cart items are required for guest checkout" });
+    }
+    // Get server cart items
+    const cart = await prisma.cart.findUnique({
+      where: { userId: req.user.id },
+      include: { items: true },
+    });
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ error: "Cart is empty" });
+    }
+    rawItems = cart.items;
+  }
+
+  // Fetch details for all products
+  const productIds = rawItems.map(item => item.productId);
+  const dbProducts = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    include: { variants: true },
   });
 
-  if (!cart || cart.items.length === 0) {
-    return res.status(400).json({ error: "Cart is empty" });
-  }
+  const productMap = new Map(dbProducts.map(p => [p.id, p]));
 
-  // Validate stock
-  for (const item of cart.items) {
-    if (item.product.stock < item.quantity) {
-      return res.status(400).json({
-        error: `Insufficient stock for ${item.product.name}`,
-      });
-    }
-  }
-
-  // Calculate totals
+  // Validate stock and calculate totals
   let subtotal = 0;
-  const orderItems = cart.items.map((item) => {
-    const unitPrice = Number(item.product.price);
+  const orderItems: any[] = [];
+
+  for (const item of rawItems) {
+    const product = productMap.get(item.productId);
+    if (!product) {
+      return res.status(404).json({ error: `Product not found: ${item.productId}` });
+    }
+    if (product.stock < item.quantity) {
+      return res.status(400).json({ error: `Insufficient stock for ${product.name}` });
+    }
+
+    const unitPrice = Number(product.price);
     const total = unitPrice * item.quantity;
     subtotal += total;
 
-    // Find variant name if applicable
     let variantName: string | undefined;
     if (item.variantId) {
-      const variant = item.product.variants.find((v) => v.id === item.variantId);
+      const variant = product.variants.find((v) => v.id === item.variantId);
       variantName = variant?.name;
     }
 
-    return {
-      productId: item.product.id,
-      productName: item.product.name,
+    orderItems.push({
+      productId: product.id,
+      productName: product.name,
       quantity: item.quantity,
       unitPrice,
       total,
       variantName,
-    };
-  });
+    });
+  }
 
   const shippingCost = deliveryZone === "dhaka" ? 60 : 120;
   let discount = 0;
@@ -155,7 +189,7 @@ orderRoutes.post("/", requireAuth, async (req: Request, res: Response) => {
     const newOrder = await tx.order.create({
       data: {
         orderNumber,
-        userId: req.user!.id,
+        userId: userId,
         addressId: addressIdToUse!,
         paymentMethod: paymentMethod as any,
         deliveryZone,
@@ -183,23 +217,31 @@ orderRoutes.post("/", requireAuth, async (req: Request, res: Response) => {
     });
 
     // Decrease stock
-    for (const item of cart.items) {
+    for (const item of rawItems) {
       await tx.product.update({
         where: { id: item.productId },
         data: { stock: { decrement: item.quantity } },
       });
     }
 
-    // Clear cart
-    await tx.cartItem.deleteMany({
-      where: { cartId: cart.id },
-    });
+    // Clear cart if we ordered from server cart
+    if (!items || items.length === 0) {
+      const cart = await tx.cart.findUnique({
+        where: { userId: userId },
+      });
+      if (cart) {
+        await tx.cartItem.deleteMany({
+          where: { cartId: cart.id },
+        });
+      }
+    }
 
     return newOrder;
   });
 
   return res.status(201).json({ order });
 });
+
 
 // ── List User Orders ────────────────────────────────────────
 // GET /api/orders

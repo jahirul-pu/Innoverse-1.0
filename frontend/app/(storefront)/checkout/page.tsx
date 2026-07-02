@@ -83,6 +83,11 @@ export default function CheckoutPage() {
         paymentMethod: paymentMethod.toUpperCase() as any,
         deliveryZone,
         notes: notes || undefined,
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          variantId: item.variantId || undefined,
+        })),
       };
 
       const res = await orderApi.create(orderPayload);
@@ -108,20 +113,6 @@ export default function CheckoutPage() {
     );
   }
 
-  // If not logged in, request login first
-  if (!user) {
-    return (
-      <div style={{ maxWidth: 500, margin: "100px auto", padding: "var(--space-6)", backgroundColor: "var(--color-surface)", border: "var(--border-hairline)", borderRadius: "var(--border-radius-md)", textAlign: "center" }}>
-        <h2 style={{ marginBottom: "var(--space-4)" }}>🔒 Checkout Required Sign In</h2>
-        <p style={{ color: "var(--color-text-secondary)", marginBottom: "var(--space-6)", fontSize: "var(--text-sm)" }}>
-          Please log in or create an account to complete your purchase.
-        </p>
-        <Link href={`/auth?redirect=/checkout`} className="btn btn--primary btn--lg btn--block">
-          Login / Register
-        </Link>
-      </div>
-    );
-  }
 
   // If cart is empty and order is not placed yet
   if (items.length === 0 && !placedOrder) {
