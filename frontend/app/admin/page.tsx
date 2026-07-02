@@ -6,20 +6,43 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthContext";
 import { productApi } from "@/lib/api";
 import styles from "./Admin.module.css";
+import { 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  FolderTree, 
+  Building2, 
+  Ticket, 
+  Image as ImageIcon, 
+  Bell, 
+  Sun, 
+  Moon, 
+  Search,
+  Plus,
+  Trash2,
+  Edit,
+  Store,
+  Settings,
+  AlertTriangle,
+  ArrowUpRight,
+  ArrowDownRight,
+  DollarSign
+} from "lucide-react";
 
 type AdminView = "dashboard" | "products" | "orders" | "customers" | "categories" | "brands" | "coupons";
 
 const navItems = [
-  { icon: "📊", label: "Dashboard", key: "dashboard" as const },
-  { icon: "📦", label: "Products", key: "products" as const },
-  { icon: "🛒", label: "Orders", key: "orders" as const },
-  { icon: "👥", label: "Customers", key: "customers" as const },
+  { icon: LayoutDashboard, label: "Dashboard", key: "dashboard" as const },
+  { icon: Package, label: "Products", key: "products" as const },
+  { icon: ShoppingCart, label: "Orders", key: "orders" as const },
+  { icon: Users, label: "Customers", key: "customers" as const },
 ];
 
 const navCatalog = [
-  { icon: "🏷️", label: "Categories", key: "categories" as const },
-  { icon: "🏢", label: "Brands", key: "brands" as const },
-  { icon: "🎫", label: "Coupons", key: "coupons" as const },
+  { icon: FolderTree, label: "Categories", key: "categories" as const },
+  { icon: Building2, label: "Brands", key: "brands" as const },
+  { icon: Ticket, label: "Coupons", key: "coupons" as const },
 ];
 
 function formatBDT(amount: number) {
@@ -575,33 +598,39 @@ export default function AdminDashboard() {
           {/* Main Nav */}
           <div className={styles["admin-nav__group"]}>
             <div className={styles["admin-nav__group-label"]}>Main</div>
-            {navItems.map((item) => (
-              <button
-                key={item.key}
-                className={`${styles["admin-nav__link"]} ${activeView === item.key ? styles["admin-nav__link--active"] : ""}`}
-                onClick={() => setActiveView(item.key)}
-              >
-                <span className={styles["admin-nav__icon"]}>{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  className={`${styles["admin-nav__link"]} ${activeView === item.key ? styles["admin-nav__link--active"] : ""}`}
+                  onClick={() => setActiveView(item.key)}
+                >
+                  <IconComponent className={styles["admin-nav__icon"]} size={18} />
+                  {item.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Catalog */}
           <div className={styles["admin-nav__group"]}>
             <div className={styles["admin-nav__group-label"]}>Catalog</div>
-            {navCatalog.map((item) => (
-              <button
-                key={item.key}
-                className={`${styles["admin-nav__link"]} ${activeView === item.key ? styles["admin-nav__link--active"] : ""}`}
-                onClick={() => setActiveView(item.key)}
-              >
-                <span className={styles["admin-nav__icon"]}>{item.icon}</span>
-                {item.label}
-              </button>
-            ))}
+            {navCatalog.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  className={`${styles["admin-nav__link"]} ${activeView === item.key ? styles["admin-nav__link--active"] : ""}`}
+                  onClick={() => setActiveView(item.key)}
+                >
+                  <IconComponent className={styles["admin-nav__icon"]} size={18} />
+                  {item.label}
+                </button>
+              );
+            })}
             <button className={styles["admin-nav__link"]} onClick={() => alert("Media management coming soon.")}>
-              <span className={styles["admin-nav__icon"]}>📸</span>
+              <ImageIcon className={styles["admin-nav__icon"]} size={18} />
               Media
             </button>
           </div>
@@ -610,11 +639,11 @@ export default function AdminDashboard() {
           <div className={styles["admin-nav__group"]}>
             <div className={styles["admin-nav__group-label"]}>System</div>
             <button className={styles["admin-nav__link"]} onClick={() => alert("Settings is currently stubbed.")}>
-              <span className={styles["admin-nav__icon"]}>⚙️</span>
+              <Settings className={styles["admin-nav__icon"]} size={18} />
               Settings
             </button>
             <Link href="/" className={styles["admin-nav__link"]}>
-              <span className={styles["admin-nav__icon"]}>🏪</span>
+              <Store className={styles["admin-nav__icon"]} size={18} />
               View Store
             </Link>
           </div>
@@ -640,7 +669,7 @@ export default function AdminDashboard() {
           <div className={styles["admin-topbar__title"]}>{viewTitles[activeView]}</div>
           <div className={styles["admin-topbar__actions"]}>
             <div className={styles["admin-topbar__search"]}>
-              🔍
+              <Search size={16} style={{ minWidth: 16 }} />
               <input
                 type="text"
                 placeholder={activeView === "dashboard" ? "Select a tab to search..." : `Search ${viewTitles[activeView]}...`}
@@ -651,11 +680,11 @@ export default function AdminDashboard() {
               />
             </div>
             <button className={styles["admin-topbar__icon-btn"]} aria-label="Notifications" onClick={() => alert("No notifications.")}>
-              🔔
+              <Bell size={18} />
               {lowStockProducts.length > 0 && <span className={styles["admin-topbar__notif-dot"]} />}
             </button>
             <button className={styles["admin-topbar__icon-btn"]} aria-label="Toggle Theme" onClick={toggleTheme}>
-              {theme === "dark" ? "☀️" : "🌙"}
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           </div>
         </div>
