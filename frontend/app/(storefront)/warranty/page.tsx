@@ -46,7 +46,7 @@ export default function WarrantyPolicyPage() {
           {/* Section 1 */}
           <section className={styles.section} id="whats-covered">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>01 //</span>
+              <span className={styles.sectionNum}>01.</span>
               <h2 className={styles.sectionTitle}>What's Covered</h2>
             </div>
             <div className={styles.text}>
@@ -64,7 +64,7 @@ export default function WarrantyPolicyPage() {
           {/* Section 2 */}
           <section className={styles.section} id="whats-not-covered">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>02 //</span>
+              <span className={styles.sectionNum}>02.</span>
               <h2 className={styles.sectionTitle}>What's Not Covered</h2>
             </div>
             <div className={styles.text}>
@@ -87,7 +87,7 @@ export default function WarrantyPolicyPage() {
           {/* Section 3 */}
           <section className={styles.section} id="manufacturer-vs-support">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>03 //</span>
+              <span className={styles.sectionNum}>03.</span>
               <h2 className={styles.sectionTitle}>Manufacturer Warranty vs. Our Support</h2>
             </div>
             <div className={styles.text}>
@@ -111,7 +111,7 @@ export default function WarrantyPolicyPage() {
           {/* Section 4 */}
           <section className={styles.section} id="return-shipping">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>04 //</span>
+              <span className={styles.sectionNum}>04.</span>
               <h2 className={styles.sectionTitle}>Return Shipping</h2>
             </div>
             <div className={styles.text}>
@@ -126,7 +126,7 @@ export default function WarrantyPolicyPage() {
           {/* Section 5 */}
           <section className={styles.section} id="how-resolved">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>05 //</span>
+              <span className={styles.sectionNum}>05.</span>
               <h2 className={styles.sectionTitle}>How Claims Are Resolved</h2>
             </div>
             <div className={styles.text}>
@@ -144,7 +144,7 @@ export default function WarrantyPolicyPage() {
           {/* Section 6 */}
           <section className={styles.section} id="how-to-start">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>06 //</span>
+              <span className={styles.sectionNum}>06.</span>
               <h2 className={styles.sectionTitle}>How to Start a Warranty Claim</h2>
             </div>
             <div className={styles.text}>

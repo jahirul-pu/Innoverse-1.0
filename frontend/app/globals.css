@@ -13,7 +13,7 @@
    IBM Plex Sans  — Body copy, descriptions, UI labels (engineering docs)
    IBM Plex Mono  — Prices, discounts, SKUs, tracking numbers (data face)
    -------------------------------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* --------------------------------------------------------------------------
    CSS Custom Properties — Design Tokens
@@ -21,42 +21,42 @@
 :root {
   /* ── Color Palette ── */
   /* Accents (same across light/dark) */
-  --color-signal-amber: #FF7A29;
-  --color-signal-amber-hover: #E86A1C;
-  --color-trace-blue: #2F6FED;
-  --color-trace-blue-hover: #2560D4;
-  --color-circuit-green: #2BB673;
-  --color-circuit-green-hover: #239E63;
+  --color-signal-amber: #FF5A1F;
+  --color-signal-amber-hover: #E04810;
+  --color-trace-blue: #4F46E5;
+  --color-trace-blue-hover: #4338CA;
+  --color-circuit-green: #10B981;
+  --color-circuit-green-hover: #059669;
 
   /* Light Mode (default) */
-  --color-bg: #F3F4F1;
+  --color-bg: #F9FAFB;
   --color-surface: #FFFFFF;
-  --color-surface-hover: #FAFAF9;
-  --color-text-primary: #1C1E20;
-  --color-text-secondary: #5A5D62;
-  --color-text-tertiary: #8A8D92;
-  --color-border: #DEDFDB;
-  --color-border-light: #EDEDEB;
-  --color-divider: #DEDFDB;
+  --color-surface-hover: #F3F4F6;
+  --color-text-primary: #111827;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #9CA3AF;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-divider: #E5E7EB;
 
   /* Status Dots */
   --color-status-in-stock: var(--color-circuit-green);
-  --color-status-out-of-stock: #9CA0A6;
+  --color-status-out-of-stock: #9CA3AF;
   --color-status-processing: var(--color-trace-blue);
   --color-status-shipped: var(--color-trace-blue);
   --color-status-delivered: var(--color-circuit-green);
-  --color-status-cancelled: #DC3545;
+  --color-status-cancelled: #EF4444;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(28, 30, 32, 0.05);
-  --shadow-md: 0 2px 8px rgba(28, 30, 32, 0.08);
-  --shadow-lg: 0 4px 16px rgba(28, 30, 32, 0.10);
-  --shadow-card-hover: 0 6px 20px rgba(28, 30, 32, 0.12);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
 
   /* ── Typography ── */
-  --font-display: 'Space Grotesk', system-ui, sans-serif;
-  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-data: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-data: 'Inter', system-ui, sans-serif;
 
   /* Font Sizes (fluid scale) */
   --text-xs: 0.75rem;     /* 12px */
@@ -97,10 +97,10 @@
   --space-24: 6rem;     /* 96px */
 
   /* ── Layout ── */
-  --border-radius-sm: 4px;
-  --border-radius-md: 6px;
-  --border-radius-lg: 8px;
-  --border-radius-xl: 12px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
   --border-radius-full: 9999px;
 
   --container-max: 1280px;

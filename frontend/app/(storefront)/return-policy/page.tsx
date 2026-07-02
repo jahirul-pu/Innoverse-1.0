@@ -46,7 +46,7 @@ export default function ReturnPolicyPage() {
           {/* Section 1 */}
           <section className={styles.section} id="inspect-at-delivery">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>01 //</span>
+              <span className={styles.sectionNum}>01.</span>
               <h2 className={styles.sectionTitle}>Inspect at Delivery</h2>
             </div>
             <div className={styles.text}>
@@ -76,7 +76,7 @@ export default function ReturnPolicyPage() {
           {/* Section 2 */}
           <section className={styles.section} id="whats-not-covered">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>02 //</span>
+              <span className={styles.sectionNum}>02.</span>
               <h2 className={styles.sectionTitle}>What's Not Covered</h2>
             </div>
             <div className={styles.text}>
@@ -97,7 +97,7 @@ export default function ReturnPolicyPage() {
           {/* Section 3 */}
           <section className={styles.section} id="warranty-returns">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>03 //</span>
+              <span className={styles.sectionNum}>03.</span>
               <h2 className={styles.sectionTitle}>Warranty-Period Returns</h2>
             </div>
             <div className={styles.text}>
@@ -116,7 +116,7 @@ export default function ReturnPolicyPage() {
           {/* Section 4 */}
           <section className={styles.section} id="exchanges">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>04 //</span>
+              <span className={styles.sectionNum}>04.</span>
               <h2 className={styles.sectionTitle}>Exchanges</h2>
             </div>
             <div className={styles.text}>
@@ -129,7 +129,7 @@ export default function ReturnPolicyPage() {
           {/* Section 5 */}
           <section className={styles.section} id="refunds">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>05 //</span>
+              <span className={styles.sectionNum}>05.</span>
               <h2 className={styles.sectionTitle}>Refunds</h2>
             </div>
             <div className={styles.text}>
@@ -153,7 +153,7 @@ export default function ReturnPolicyPage() {
           {/* Section 6 */}
           <section className={styles.section} id="how-to-start">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionNum}>06 //</span>
+              <span className={styles.sectionNum}>06.</span>
               <h2 className={styles.sectionTitle}>How to Start a Return or Claim</h2>
             </div>
             <div className={styles.text}>
