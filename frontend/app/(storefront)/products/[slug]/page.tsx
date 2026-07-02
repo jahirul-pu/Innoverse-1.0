@@ -136,8 +136,22 @@ export default function ProductDetailPage() {
     );
   }
 
-  const price = Number(product.price) || 0;
+  // Get color options from API variants or fallback colors field
+  const colorVariants = product.variants
+    ? product.variants.filter((v: any) => v.type === "color").map((v: any) => ({
+        id: v.id,
+        name: v.name,
+        hex: v.value,
+        priceAdj: Number(v.priceAdj) || 0,
+        stock: v.stock
+      }))
+    : (product.colors || []);
+
+  const selectedVariant = colorVariants[selectedColor];
+  const price = (Number(product.price) || 0) + (selectedVariant?.priceAdj || 0);
   const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
+  const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
+
   const discount = comparePrice && comparePrice > price
     ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
     : null;
@@ -189,8 +203,8 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div className={styles.pdp__info}>
           {/* Status */}
-          <span className={`${styles.pdp__status} ${product.stock > 0 ? styles["pdp__status--in-stock"] : styles["pdp__status--out-of-stock"]}`}>
-            {product.stock > 0 ? "In Stock" : "Out of Stock"}
+          <span className={`${styles.pdp__status} ${currentStock > 0 ? styles["pdp__status--in-stock"] : styles["pdp__status--out-of-stock"]}`}>
+            {currentStock > 0 ? "In Stock" : "Out of Stock"}
           </span>
 
           {/* Brand */}
@@ -229,14 +243,14 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Color Variants (if any) */}
-          {product.colors && product.colors.length > 0 && (
+          {colorVariants.length > 0 && (
             <div className={styles.pdp__variants}>
               <div className={styles["pdp__variant-group"]}>
                 <span className={styles["pdp__variant-label"]}>
-                  Color: <span>{product.colors[selectedColor]?.name}</span>
+                  Color: <span>{colorVariants[selectedColor]?.name}</span>
                 </span>
                 <div className={styles["pdp__variant-options"]}>
-                  {product.colors.map((color: any, i: number) => (
+                  {colorVariants.map((color: any, i: number) => (
                     <button
                       key={color.name}
                       className={`${styles["pdp__color-btn"]} ${i === selectedColor ? styles["pdp__color-btn--active"] : ""}`}
@@ -279,12 +293,12 @@ export default function ProductDetailPage() {
               id="add-to-cart-btn"
               onClick={async () => {
                 try {
-                  await addItem(product.id, quantity, undefined, {
+                  await addItem(product.id, quantity, selectedVariant?.id, {
                     name: product.name,
                     slug: product.slug || slug,
-                    price: product.price,
+                    price: price,
                     compareAtPrice: product.compareAtPrice,
-                    stock: product.stock,
+                    stock: currentStock,
                     images: product.images,
                     brand: product.brand,
                   });
@@ -293,6 +307,7 @@ export default function ProductDetailPage() {
                   console.error(err);
                 }
               }}
+              disabled={currentStock <= 0}
             >
               <CartPlusIcon /> Add to Cart
             </button>
@@ -301,12 +316,12 @@ export default function ProductDetailPage() {
               id="buy-now-btn"
               onClick={async () => {
                 try {
-                  await addItem(product.id, quantity, undefined, {
+                  await addItem(product.id, quantity, selectedVariant?.id, {
                     name: product.name,
                     slug: product.slug || slug,
-                    price: product.price,
+                    price: price,
                     compareAtPrice: product.compareAtPrice,
-                    stock: product.stock,
+                    stock: currentStock,
                     images: product.images,
                     brand: product.brand,
                   });
@@ -315,6 +330,7 @@ export default function ProductDetailPage() {
                   console.error(err);
                 }
               }}
+              disabled={currentStock <= 0}
             >
               Buy Now
             </button>

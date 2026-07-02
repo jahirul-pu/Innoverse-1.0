@@ -136,6 +136,12 @@ export default function AdminDashboard() {
   const [prodIsFeatured, setProdIsFeatured] = useState(false);
   const [prodIsNewArrival, setProdIsNewArrival] = useState(false);
   const [prodImages, setProdImages] = useState<{ url: string; alt?: string | null; isPrimary: boolean }[]>([]);
+  const [prodVariants, setProdVariants] = useState<{ name: string; type: string; value: string; priceAdj: number; stock: number }[]>([]);
+  const [newVariantName, setNewVariantName] = useState("");
+  const [newVariantType, setNewVariantType] = useState("color");
+  const [newVariantValue, setNewVariantValue] = useState("");
+  const [newVariantPriceAdj, setNewVariantPriceAdj] = useState("0");
+  const [newVariantStock, setNewVariantStock] = useState("10");
   const [uploadingImages, setUploadingImages] = useState(false);
   const [manualImageUrl, setManualImageUrl] = useState("");
 
@@ -253,34 +259,87 @@ export default function AdminDashboard() {
     setProdIsFeatured(false);
     setProdIsNewArrival(false);
     setProdImages([]);
+    setProdVariants([]);
+    setNewVariantName("");
+    setNewVariantType("color");
+    setNewVariantValue("");
+    setNewVariantPriceAdj("0");
+    setNewVariantStock("10");
     setManualImageUrl("");
     setProductModalOpen(true);
   }
 
   // Open modal for Edit
-  function openEditModal(prod: any) {
-    setEditingProduct(prod);
-    setProdName(prod.name || "");
-    setProdSku(prod.sku || "");
-    setProdPrice(prod.price?.toString() || "");
-    setProdComparePrice(prod.compareAtPrice?.toString() || "");
-    setProdCostPrice(prod.costPrice?.toString() || "");
-    setProdStock(prod.stock?.toString() || "");
-    setProdCategoryId(prod.category?.id || prod.categoryId || "");
-    setProdBrandId(prod.brand?.id || prod.brandId || "");
-    setProdShortDesc(prod.shortDescription || "");
-    setProdDesc(prod.description || "");
-    setProdIsFeatured(prod.isFeatured || false);
-    setProdIsNewArrival(prod.isNewArrival || false);
-    setProdImages(
-      prod.images?.map((img: any) => ({
-        url: img.url,
-        alt: img.alt || "",
-        isPrimary: img.isPrimary || false,
-      })) || []
-    );
-    setManualImageUrl("");
-    setProductModalOpen(true);
+  async function openEditModal(prod: any) {
+    try {
+      // Fetch fresh, full product details including variants
+      const res = await productApi.getBySlug(prod.slug);
+      const fullProd = res?.product || prod;
+
+      setEditingProduct(fullProd);
+      setProdName(fullProd.name || "");
+      setProdSku(fullProd.sku || "");
+      setProdPrice(fullProd.price?.toString() || "");
+      setProdComparePrice(fullProd.compareAtPrice?.toString() || "");
+      setProdCostPrice(fullProd.costPrice?.toString() || "");
+      setProdStock(fullProd.stock?.toString() || "");
+      setProdCategoryId(fullProd.category?.id || fullProd.categoryId || "");
+      setProdBrandId(fullProd.brand?.id || fullProd.brandId || "");
+      setProdShortDesc(fullProd.shortDescription || "");
+      setProdDesc(fullProd.description || "");
+      setProdImages(
+        fullProd.images?.map((img: any) => ({
+          url: img.url,
+          alt: img.alt || "",
+          isPrimary: img.isPrimary || false,
+        })) || []
+      );
+      setProdVariants(
+        fullProd.variants?.map((v: any) => ({
+          name: v.name,
+          type: v.type,
+          value: v.value,
+          priceAdj: Number(v.priceAdj) || 0,
+          stock: Number(v.stock) || 0,
+        })) || []
+      );
+      setNewVariantName("");
+      setNewVariantType("color");
+      setNewVariantValue("");
+      setNewVariantPriceAdj("0");
+      setNewVariantStock("10");
+      setManualImageUrl("");
+      setProductModalOpen(true);
+    } catch (err) {
+      console.error("Failed to load product details from API", err);
+      // Fallback
+      setEditingProduct(prod);
+      setProdName(prod.name || "");
+      setProdSku(prod.sku || "");
+      setProdPrice(prod.price?.toString() || "");
+      setProdComparePrice(prod.compareAtPrice?.toString() || "");
+      setProdCostPrice(prod.costPrice?.toString() || "");
+      setProdStock(prod.stock?.toString() || "");
+      setProdCategoryId(prod.category?.id || prod.categoryId || "");
+      setProdBrandId(prod.brand?.id || prod.brandId || "");
+      setProdShortDesc(prod.shortDescription || "");
+      setProdDesc(prod.description || "");
+      setProdImages(
+        prod.images?.map((img: any) => ({
+          url: img.url,
+          alt: img.alt || "",
+          isPrimary: img.isPrimary || false,
+        })) || []
+      );
+      setProdVariants([]);
+      setNewVariantName("");
+      setNewVariantType("color");
+      setNewVariantValue("");
+      setNewVariantPriceAdj("0");
+      setNewVariantStock("10");
+      setManualImageUrl("");
+      setProductModalOpen(true);
+    }
   }
 
   // Handle Save (Create / Update)
@@ -300,7 +359,8 @@ export default function AdminDashboard() {
         description: prodDesc,
         isFeatured: prodIsFeatured,
         isNewArrival: prodIsNewArrival,
-        images: prodImages
+        images: prodImages,
+        variants: prodVariants
       };
 
       if (editingProduct) {
@@ -1420,6 +1480,167 @@ export default function AdminDashboard() {
                   <div className={styles["form-checkbox-group"]}>
                     <input type="checkbox" id="new-arrival" className={styles["form-checkbox"]} checked={prodIsNewArrival} onChange={(e) => setProdIsNewArrival(e.target.checked)} />
                     <label htmlFor="new-arrival">New Arrival Tag</label>
+                  </div>
+
+                  <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`} style={{ borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-4)", marginTop: "var(--space-2)" }}>
+                    <label className="label" style={{ fontWeight: "var(--weight-bold)", fontSize: "var(--text-base)" }}>Product Variants</label>
+                    <span style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "block", marginBottom: "var(--space-3)" }}>
+                      Add options like colors (e.g. name: "Midnight Black", type: "color", value: "#1C1E20") or sizes.
+                    </span>
+
+                    {/* Variants List Table */}
+                    {prodVariants.length > 0 && (
+                      <table className={styles["specs-table"]} style={{ width: "100%", marginBottom: "var(--space-3)" }}>
+                        <thead>
+                          <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
+                            <th style={{ textAlign: "left", padding: "var(--space-2) 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Name</th>
+                            <th style={{ textAlign: "left", padding: "var(--space-2) 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Type</th>
+                            <th style={{ textAlign: "left", padding: "var(--space-2) 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Value</th>
+                            <th style={{ textAlign: "left", padding: "var(--space-2) 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Price Adj (৳)</th>
+                            <th style={{ textAlign: "left", padding: "var(--space-2) 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Stock</th>
+                            <th style={{ padding: "var(--space-2) 0", width: "40px" }}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {prodVariants.map((v, idx) => (
+                            <tr key={idx} style={{ borderBottom: "1px solid var(--color-border-subtle)" }}>
+                              <td style={{ padding: "var(--space-2) 0", fontSize: "var(--text-sm)" }}>{v.name}</td>
+                              <td style={{ padding: "var(--space-2) 0", fontSize: "var(--text-sm)", textTransform: "capitalize" }}>{v.type}</td>
+                              <td style={{ padding: "var(--space-2) 0", fontSize: "var(--text-sm)" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  {v.type === "color" && (
+                                    <span style={{ display: "inline-block", width: "14px", height: "14px", borderRadius: "50%", backgroundColor: v.value, border: "1px solid var(--color-border)" }} />
+                                  )}
+                                  <code>{v.value}</code>
+                                </div>
+                              </td>
+                              <td style={{ padding: "var(--space-2) 0", fontSize: "var(--text-sm)" }}>৳{v.priceAdj}</td>
+                              <td style={{ padding: "var(--space-2) 0", fontSize: "var(--text-sm)" }}>{v.stock}</td>
+                              <td style={{ padding: "var(--space-2) 0", textAlign: "right" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setProdVariants(prev => prev.filter((_, i) => i !== idx))}
+                                  style={{ background: "none", border: "none", color: "var(--color-signal-red)", fontSize: "16px", cursor: "pointer", padding: "0 4px" }}
+                                  title="Remove variant"
+                                >
+                                  ×
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+
+                    {/* Add Variant Form Row */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1.2fr 1fr 1fr auto", gap: "var(--space-2)", alignItems: "end", backgroundColor: "rgba(0, 0, 0, 0.02)", padding: "var(--space-3)", borderRadius: "var(--border-radius-sm)", border: "1px solid var(--color-border)" }}>
+                      <div className={styles["form-group"]} style={{ margin: 0 }}>
+                        <label className="label" style={{ fontSize: "var(--text-xxs)" }}>Variant Name</label>
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="e.g. Midnight Black"
+                          value={newVariantName}
+                          onChange={(e) => setNewVariantName(e.target.value)}
+                        />
+                      </div>
+                      <div className={styles["form-group"]} style={{ margin: 0 }}>
+                        <label className="label" style={{ fontSize: "var(--text-xxs)" }}>Type</label>
+                        <select
+                          className="select"
+                          value={newVariantType}
+                          onChange={(e) => {
+                            setNewVariantType(e.target.value);
+                            setNewVariantValue(e.target.value === "color" ? "#000000" : "");
+                          }}
+                        >
+                          <option value="color">Color</option>
+                          <option value="size">Size</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div className={styles["form-group"]} style={{ margin: 0 }}>
+                        <label className="label" style={{ fontSize: "var(--text-xxs)" }}>Value</label>
+                        {newVariantType === "color" ? (
+                          <div style={{ display: "flex", gap: "4px", width: "100%" }}>
+                            <input
+                              type="color"
+                              className="input"
+                              style={{ width: "32px", padding: 0, height: "36px", cursor: "pointer", border: "1px solid var(--color-border)", borderRadius: "var(--border-radius-xs)" }}
+                              value={newVariantValue.startsWith("#") && newVariantValue.length === 7 ? newVariantValue : "#000000"}
+                              onChange={(e) => setNewVariantValue(e.target.value)}
+                            />
+                            <input
+                              type="text"
+                              className="input"
+                              style={{ flex: 1 }}
+                              placeholder="#000000"
+                              value={newVariantValue}
+                              onChange={(e) => setNewVariantValue(e.target.value)}
+                            />
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            className="input"
+                            placeholder="e.g. XL or 128GB"
+                            value={newVariantValue}
+                            onChange={(e) => setNewVariantValue(e.target.value)}
+                          />
+                        )}
+                      </div>
+                      <div className={styles["form-group"]} style={{ margin: 0 }}>
+                        <label className="label" style={{ fontSize: "var(--text-xxs)" }}>Price Adj (৳)</label>
+                        <input
+                          type="number"
+                          className="input"
+                          placeholder="0"
+                          value={newVariantPriceAdj}
+                          onChange={(e) => setNewVariantPriceAdj(e.target.value)}
+                        />
+                      </div>
+                      <div className={styles["form-group"]} style={{ margin: 0 }}>
+                        <label className="label" style={{ fontSize: "var(--text-xxs)" }}>Stock</label>
+                        <input
+                          type="number"
+                          className="input"
+                          placeholder="10"
+                          value={newVariantStock}
+                          onChange={(e) => setNewVariantStock(e.target.value)}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn--secondary"
+                        style={{ height: "36px", padding: "0 var(--space-3)", whiteSpace: "nowrap" }}
+                        onClick={() => {
+                          if (!newVariantName.trim()) {
+                            alert("Please enter a variant name");
+                            return;
+                          }
+                          if (!newVariantValue.trim()) {
+                            alert("Please enter a variant value");
+                            return;
+                          }
+                          setProdVariants(prev => [
+                            ...prev,
+                            {
+                              name: newVariantName.trim(),
+                              type: newVariantType,
+                              value: newVariantValue.trim(),
+                              priceAdj: Number(newVariantPriceAdj) || 0,
+                              stock: Number(newVariantStock) || 0,
+                            }
+                          ]);
+                          setNewVariantName("");
+                          setNewVariantValue(newVariantType === "color" ? "#000000" : "");
+                          setNewVariantPriceAdj("0");
+                          setNewVariantStock("10");
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

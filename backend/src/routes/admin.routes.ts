@@ -155,6 +155,20 @@ adminRoutes.patch("/products/:id", async (req: Request, res: Response) => {
     delete updateData.images;
   }
 
+  // Handle nested variants update
+  let newVariants = undefined;
+  if (updateData.variants !== undefined) {
+    newVariants = updateData.variants;
+    delete updateData.variants;
+  }
+
+  // Handle nested specs update
+  let newSpecs = undefined;
+  if (updateData.specs !== undefined) {
+    newSpecs = updateData.specs;
+    delete updateData.specs;
+  }
+
   const product = await prisma.$transaction(async (tx) => {
     if (newImages !== undefined) {
       // Clear existing images
@@ -175,10 +189,50 @@ adminRoutes.patch("/products/:id", async (req: Request, res: Response) => {
       }
     }
 
+    if (newVariants !== undefined) {
+      // Clear existing variants
+      await tx.productVariant.deleteMany({
+        where: { productId: id }
+      });
+      // Re-create new variants
+      if (Array.isArray(newVariants) && newVariants.length > 0) {
+        await tx.productVariant.createMany({
+          data: newVariants.map((v: any) => ({
+            productId: id,
+            name: v.name,
+            type: v.type,
+            value: v.value,
+            priceAdj: v.priceAdj || 0,
+            stock: v.stock || 0,
+            sku: v.sku || null,
+            isActive: v.isActive !== undefined ? v.isActive : true
+          }))
+        });
+      }
+    }
+
+    if (newSpecs !== undefined) {
+      // Clear existing specs
+      await tx.productSpec.deleteMany({
+        where: { productId: id }
+      });
+      // Re-create new specs
+      if (Array.isArray(newSpecs) && newSpecs.length > 0) {
+        await tx.productSpec.createMany({
+          data: newSpecs.map((s: any, i: number) => ({
+            productId: id,
+            key: s.key,
+            value: s.value,
+            sortOrder: i
+          }))
+        });
+      }
+    }
+
     return await tx.product.update({
       where: { id },
       data: updateData,
-      include: { images: true }
+      include: { images: true, specs: true, variants: true }
     });
   });
 
