@@ -84,7 +84,10 @@ function ProductCardGrid({ product }: { product: any }) {
                 name: product.name,
                 slug: product.slug,
                 price: product.price,
-                images: product.images
+                compareAtPrice: product.compareAtPrice,
+                stock: product.stock,
+                images: product.images,
+                brand: product.brand,
               });
             } catch (err) {
               console.error(err);
@@ -159,7 +162,10 @@ function ProductCardList({ product }: { product: any }) {
                   name: product.name,
                   slug: product.slug,
                   price: product.price,
-                  images: product.images
+                  compareAtPrice: product.compareAtPrice,
+                  stock: product.stock,
+                  images: product.images,
+                  brand: product.brand,
                 });
               } catch (err) {
                 console.error(err);
@@ -437,7 +443,7 @@ export default function BrandListingPage({ params }: PageProps) {
                 <CloseIcon />
               </button>
             </span>
-          ))}
+          )}
           <button className={styles["clear-filters"]} onClick={clearAllFilters}>
             Clear all
           </button>
