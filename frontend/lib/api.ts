@@ -99,6 +99,7 @@ export interface ProductFilters {
   inStock?: boolean;
   featured?: boolean;
   newArrival?: boolean;
+  hasDiscount?: boolean;
 }
 
 export const productApi = {

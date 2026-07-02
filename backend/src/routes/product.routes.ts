@@ -61,6 +61,9 @@ productRoutes.get("/", async (req: Request, res: Response) => {
 
   if (featured === "true") where.isFeatured = true;
   if (newArrival === "true") where.isNewArrival = true;
+  if (req.query.hasDiscount === "true") {
+    where.compareAtPrice = { not: null };
+  }
 
   // Sort
   let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
