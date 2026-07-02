@@ -241,8 +241,18 @@ export default function ProductDetailPage() {
               SKU: {product.sku}
             </span>
             {product.warranty && (
-              <span className="data-text" style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", display: "flex", alignItems: "center" }}>
-                <ShieldIcon /> Warranty: <strong style={{ marginLeft: "4px" }}>{product.warranty}</strong>
+              <span className="data-text" style={{
+                fontSize: "var(--text-xs)",
+                color: product.warranty === "No Warranty" ? "var(--color-text-secondary)" : "var(--color-circuit-green)",
+                display: "flex",
+                alignItems: "center",
+                backgroundColor: product.warranty === "No Warranty" ? "var(--color-surface-hover)" : "rgba(16, 185, 129, 0.08)",
+                padding: "2px 8px",
+                borderRadius: "var(--border-radius-full)",
+                border: product.warranty === "No Warranty" ? "1px solid var(--color-border)" : "1px solid rgba(16, 185, 129, 0.2)",
+                fontWeight: "var(--weight-medium)"
+              }}>
+                <ShieldIcon /> {product.warranty === "No Warranty" ? "No Warranty" : `Warranty: ${product.warranty}`}
               </span>
             )}
           </div>
@@ -354,6 +364,84 @@ export default function ProductDetailPage() {
               <ShareIcon />
             </button>
           </div>
+
+          {/* Warranty Callout */}
+          {product.warranty && product.warranty !== "No Warranty" && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-3)",
+              backgroundColor: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderLeft: "4px solid var(--color-circuit-green)",
+              borderRadius: "var(--border-radius-md)",
+              padding: "var(--space-3) var(--space-4)",
+              marginTop: "var(--space-4)",
+              marginBottom: "var(--space-4)",
+              boxShadow: "var(--shadow-sm)"
+            }}>
+              <div style={{
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                color: "var(--color-circuit-green)",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-circuit-green)", fontWeight: "var(--weight-bold)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Product Protection</div>
+                <div style={{ fontSize: "var(--text-sm)", color: "var(--color-text-primary)", fontWeight: "var(--weight-bold)", marginTop: "1px" }}>
+                  {product.warranty} Warranty
+                </div>
+              </div>
+            </div>
+          )}
+
+          {product.warranty === "No Warranty" && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-3)",
+              backgroundColor: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderLeft: "4px solid var(--color-text-tertiary)",
+              borderRadius: "var(--border-radius-md)",
+              padding: "var(--space-3) var(--space-4)",
+              marginTop: "var(--space-4)",
+              marginBottom: "var(--space-4)",
+              boxShadow: "var(--shadow-sm)"
+            }}>
+              <div style={{
+                backgroundColor: "var(--color-surface-hover)",
+                color: "var(--color-text-secondary)",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0
+              }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", fontWeight: "var(--weight-bold)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Product Protection</div>
+                <div style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)", fontWeight: "var(--weight-semibold)", marginTop: "1px" }}>
+                  No Warranty coverage for this product
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Delivery Estimate */}
           <div className={styles.pdp__delivery}>

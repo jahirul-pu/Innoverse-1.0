@@ -135,7 +135,8 @@ export default function AdminDashboard() {
   const [prodDesc, setProdDesc] = useState("");
   const [prodIsFeatured, setProdIsFeatured] = useState(false);
   const [prodIsNewArrival, setProdIsNewArrival] = useState(false);
-  const [prodWarranty, setProdWarranty] = useState("");
+  const [prodWarranty, setProdWarranty] = useState("No Warranty");
+  const [noWarranty, setNoWarranty] = useState(true);
   const [prodImages, setProdImages] = useState<{ url: string; alt?: string | null; isPrimary: boolean }[]>([]);
   const [prodVariants, setProdVariants] = useState<{ name: string; type: string; value: string; priceAdj: number; stock: number }[]>([]);
   const [newVariantName, setNewVariantName] = useState("");
@@ -259,7 +260,8 @@ export default function AdminDashboard() {
     setProdDesc("");
     setProdIsFeatured(false);
     setProdIsNewArrival(false);
-    setProdWarranty("");
+    setProdWarranty("No Warranty");
+    setNoWarranty(true);
     setProdImages([]);
     setProdVariants([]);
     setNewVariantName("");
@@ -289,7 +291,8 @@ export default function AdminDashboard() {
       setProdBrandId(fullProd.brand?.id || fullProd.brandId || "");
       setProdShortDesc(fullProd.shortDescription || "");
       setProdDesc(fullProd.description || "");
-      setProdWarranty(fullProd.warranty || "");
+      setProdWarranty(fullProd.warranty || "No Warranty");
+      setNoWarranty(fullProd.warranty === "No Warranty" || !fullProd.warranty);
       setProdImages(
         fullProd.images?.map((img: any) => ({
           url: img.url,
@@ -327,7 +330,8 @@ export default function AdminDashboard() {
       setProdBrandId(prod.brand?.id || prod.brandId || "");
       setProdShortDesc(prod.shortDescription || "");
       setProdDesc(prod.description || "");
-      setProdWarranty(prod.warranty || "");
+      setProdWarranty(prod.warranty || "No Warranty");
+      setNoWarranty(prod.warranty === "No Warranty" || !prod.warranty);
       setProdImages(
         prod.images?.map((img: any) => ({
           url: img.url,
@@ -363,7 +367,7 @@ export default function AdminDashboard() {
         description: prodDesc,
         isFeatured: prodIsFeatured,
         isNewArrival: prodIsNewArrival,
-        warranty: prodWarranty,
+        warranty: noWarranty ? "No Warranty" : prodWarranty,
         images: prodImages,
         variants: prodVariants
       };
@@ -1346,8 +1350,38 @@ export default function AdminDashboard() {
                     <input type="text" className="input" value={prodSku} onChange={(e) => setProdSku(e.target.value)} />
                   </div>
                   <div className={styles["form-group"]}>
-                    <label className="label">Warranty Period (e.g. 1 Year, 6 Months)</label>
-                    <input type="text" className="input" placeholder="e.g. 1 Year" value={prodWarranty} onChange={(e) => setProdWarranty(e.target.value)} />
+                    <label className="label">Warranty Period</label>
+                    <select
+                      className="select"
+                      value={prodWarranty}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setProdWarranty(val);
+                        setNoWarranty(val === "No Warranty");
+                      }}
+                    >
+                      <option value="No Warranty">No Warranty</option>
+                      <option value="3 Months">3 Months</option>
+                      <option value="6 Months">6 Months</option>
+                      <option value="12 Months">12 Months</option>
+                      <option value="18 Months">18 Months</option>
+                      <option value="24 Months">24 Months</option>
+                      <option value="36 Months">36 Months</option>
+                      <option value="48 Months">48 Months</option>
+                      {/* Dynamic fallback for other custom values from database */}
+                      {prodWarranty && ![
+                        "No Warranty",
+                        "3 Months",
+                        "6 Months",
+                        "12 Months",
+                        "18 Months",
+                        "24 Months",
+                        "36 Months",
+                        "48 Months"
+                      ].includes(prodWarranty) && (
+                        <option value={prodWarranty}>{prodWarranty}</option>
+                      )}
+                    </select>
                   </div>
                   <div className={styles["form-group"]}>
                     <label className="label">Stock Quantity</label>
