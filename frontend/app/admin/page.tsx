@@ -222,7 +222,7 @@ export default function AdminDashboard() {
 
     } catch (err: any) {
       console.error(err);
-      setError("Failed to fetch administrative data. Ensure the database & backend are running.");
+      setError("Failed to fetch administrative data. Ensure the database & backend are running. Details: " + (err.message || err));
     } finally {
       setLoading(false);
     }
@@ -710,7 +710,38 @@ export default function AdminDashboard() {
 
         {/* Dynamic Admin Content Views */}
         <div className={styles["admin-content"]}>
-          {error && <div style={{ color: "var(--color-status-cancelled)", padding: "var(--space-4)", backgroundColor: "rgba(220,53,69,0.05)", border: "1px solid var(--color-status-cancelled)", borderRadius: "var(--border-radius-md)", marginBottom: "var(--space-4)" }}>{error}</div>}
+          {error && (
+            <div style={{
+              color: "var(--color-status-cancelled)",
+              padding: "var(--space-4)",
+              backgroundColor: "rgba(220,53,69,0.05)",
+              border: "1px solid var(--color-status-cancelled)",
+              borderRadius: "var(--border-radius-md)",
+              marginBottom: "var(--space-4)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "var(--space-2)"
+            }}>
+              <span>{error}</span>
+              <button
+                onClick={() => loadAdminData()}
+                style={{
+                  backgroundColor: "var(--color-status-cancelled)",
+                  color: "white",
+                  border: "none",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
           {loading ? (
             <div style={{ textAlign: "center", padding: "100px 0", color: "var(--color-text-tertiary)", fontFamily: "var(--font-data)" }}>Loading panel data...</div>
