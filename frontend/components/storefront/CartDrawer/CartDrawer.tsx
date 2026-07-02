@@ -209,12 +209,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 {formatBDT(subtotal)}
               </span>
             </div>
-            <p className={styles["cart-drawer__shipping-note"]}>
-              {subtotal >= 5000
-                ? <>🎉 You qualify for <strong>free shipping!</strong></>
-                : <>Spend ৳{(5000 - subtotal).toLocaleString("en-BD")} more for <strong>free shipping</strong></>
-              }
-            </p>
+
             <div className={styles["cart-drawer__actions"]}>
               <Link
                 href="/checkout"

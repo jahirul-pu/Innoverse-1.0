@@ -21,7 +21,7 @@ export default function CartPage() {
     return sum + comparePrice * item.quantity;
   }, 0);
   const totalDiscount = totalOriginal - subtotal;
-  const shippingCost = subtotal > 5000 ? 0 : 60;
+  const shippingCost = 60;
   const total = subtotal + shippingCost;
 
   if (loading) {
@@ -161,24 +161,9 @@ export default function CartPage() {
           <div className={styles["order-summary__row"]}>
             <span>Shipping</span>
             <span className={styles["order-summary__row-value"]}>
-              {shippingCost === 0 ? (
-                <span style={{ color: "var(--color-circuit-green)" }}>Free</span>
-              ) : (
-                formatBDT(shippingCost)
-              )}
+              {formatBDT(shippingCost)}
             </span>
           </div>
-
-          {shippingCost > 0 && (
-            <div
-              style={{
-                fontSize: "var(--text-xs)",
-                color: "var(--color-text-tertiary)",
-              }}
-            >
-              Free shipping on orders over ৳5,000
-            </div>
-          )}
 
           {/* Coupon */}
           <form className={styles["coupon-form"]} onSubmit={(e) => e.preventDefault()}>
