@@ -36,7 +36,8 @@ import {
   Camera,
   FolderOpen,
   PlugZap,
-  Printer
+  Printer,
+  Tag
 } from "lucide-react";
 
 const categoryIconMap: Record<string, any> = {
@@ -1093,7 +1094,7 @@ export default function AdminDashboard() {
                           <th>Method</th>
                           <th>Status</th>
                           <th>Update Status</th>
-                          <th>Invoice</th>
+                          <th>Print</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1123,37 +1124,70 @@ export default function AdminDashboard() {
                                 </select>
                               </td>
                               <td>
-                                <button
-                                  title="Print Invoice"
-                                  onClick={() => window.open(`/admin/invoice/${order.orderNumber}`, '_blank')}
-                                  style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "var(--space-1)",
-                                    padding: "var(--space-1) var(--space-2)",
-                                    fontSize: "var(--text-xs)",
-                                    fontWeight: 600,
-                                    color: "var(--color-signal-amber)",
-                                    background: "rgba(255, 90, 31, 0.08)",
-                                    border: "1px solid rgba(255, 90, 31, 0.2)",
-                                    borderRadius: "var(--border-radius-sm)",
-                                    cursor: "pointer",
-                                    whiteSpace: "nowrap",
-                                    fontFamily: "var(--font-data)",
-                                    transition: "all 0.15s ease",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = "rgba(255, 90, 31, 0.15)";
-                                    e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.4)";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = "rgba(255, 90, 31, 0.08)";
-                                    e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.2)";
-                                  }}
-                                >
-                                  <Printer size={13} />
-                                  Print
-                                </button>
+                                <div style={{ display: "flex", gap: "6px" }}>
+                                  <button
+                                    title="Print Invoice"
+                                    onClick={() => window.open(`/admin/invoice/${order.orderNumber}`, '_blank')}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "var(--space-1)",
+                                      padding: "var(--space-1) var(--space-2)",
+                                      fontSize: "var(--text-xs)",
+                                      fontWeight: 600,
+                                      color: "var(--color-signal-amber)",
+                                      background: "rgba(255, 90, 31, 0.08)",
+                                      border: "1px solid rgba(255, 90, 31, 0.2)",
+                                      borderRadius: "var(--border-radius-sm)",
+                                      cursor: "pointer",
+                                      whiteSpace: "nowrap",
+                                      fontFamily: "var(--font-data)",
+                                      transition: "all 0.15s ease",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = "rgba(255, 90, 31, 0.15)";
+                                      e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.4)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = "rgba(255, 90, 31, 0.08)";
+                                      e.currentTarget.style.borderColor = "rgba(255, 90, 31, 0.2)";
+                                    }}
+                                  >
+                                    <Printer size={13} />
+                                    Invoice
+                                  </button>
+                                  <button
+                                    title="Print Shipping Sticker"
+                                    onClick={() => window.open(`/admin/sticker/${order.orderNumber}`, '_blank')}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "var(--space-1)",
+                                      padding: "var(--space-1) var(--space-2)",
+                                      fontSize: "var(--text-xs)",
+                                      fontWeight: 600,
+                                      color: "var(--color-trace-blue)",
+                                      background: "rgba(79, 70, 229, 0.08)",
+                                      border: "1px solid rgba(79, 70, 229, 0.2)",
+                                      borderRadius: "var(--border-radius-sm)",
+                                      cursor: "pointer",
+                                      whiteSpace: "nowrap",
+                                      fontFamily: "var(--font-data)",
+                                      transition: "all 0.15s ease",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = "rgba(79, 70, 229, 0.15)";
+                                      e.currentTarget.style.borderColor = "rgba(79, 70, 229, 0.4)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = "rgba(79, 70, 229, 0.08)";
+                                      e.currentTarget.style.borderColor = "rgba(79, 70, 229, 0.2)";
+                                    }}
+                                  >
+                                    <Tag size={13} />
+                                    Sticker
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))
