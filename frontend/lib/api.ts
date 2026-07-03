@@ -255,6 +255,15 @@ export const uploadApi = {
     }
     return res.json();
   },
+
+
+  getBanners: () => request("/upload/banners"),
+
+  updateBanners: (banners: any[]) =>
+    request("/upload/banners", {
+      method: "POST",
+      body: JSON.stringify({ banners }),
+    }),
 };
 
 export { ApiError };

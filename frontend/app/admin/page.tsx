@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthContext";
 import { useToast } from "@/components/providers/ToastContext";
-import { productApi } from "@/lib/api";
+import { productApi, uploadApi } from "@/lib/api";
 import styles from "./Admin.module.css";
 import { 
   LayoutDashboard, 
@@ -56,7 +56,7 @@ function renderCategoryIcon(slug: string, className?: string) {
   return <IconComponent size={20} className={className} />;
 }
 
-type AdminView = "dashboard" | "products" | "orders" | "customers" | "categories" | "brands" | "coupons";
+type AdminView = "dashboard" | "products" | "orders" | "customers" | "categories" | "brands" | "coupons" | "media";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", key: "dashboard" as const },
@@ -73,6 +73,15 @@ const navCatalog = [
 
 function formatBDT(amount: number) {
   return `৳${amount.toLocaleString("en-BD")}`;
+}
+
+function formatBytes(bytes: number, decimals = 2) {
+  if (!+bytes) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 export default function AdminDashboard() {
@@ -99,6 +108,13 @@ export default function AdminDashboard() {
     setSearchQuery("");
   }, [activeView]);
 
+  // Fetch media files when changing to media tab
+  useEffect(() => {
+    if (activeView === "media") {
+      loadMediaFiles();
+    }
+  }, [activeView]);
+
   // Live Data States
   const [stats, setStats] = useState<any>({ totalProducts: 0, totalOrders: 0, totalCustomers: 0, totalRevenue: 0 });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
@@ -111,6 +127,26 @@ export default function AdminDashboard() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Media manager states (used for banners)
+  const [mediaFiles, setMediaFiles] = useState<any[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaUploading, setMediaUploading] = useState(false);
+
+  // Banner modal states
+  const [bannerModalOpen, setBannerModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<any | null>(null);
+  const [bannerOverline, setBannerOverline] = useState("");
+  const [bannerTitle, setBannerTitle] = useState("");
+  const [bannerDescription, setBannerDescription] = useState("");
+  const [bannerPrice, setBannerPrice] = useState("");
+  const [bannerOriginalPrice, setBannerOriginalPrice] = useState("");
+  const [bannerDiscount, setBannerDiscount] = useState("");
+  const [bannerCta, setBannerCta] = useState("");
+  const [bannerHref, setBannerHref] = useState("");
+  const [bannerGradient, setBannerGradient] = useState("linear-gradient(135deg, #1a1c20 0%, #2a2d33 100%)");
+  const [bannerImageUrl, setBannerImageUrl] = useState("");
 
   // Order detail expansion state
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -541,6 +577,115 @@ export default function AdminDashboard() {
     }
   }
 
+  // Banner Manager Handlers
+  async function loadMediaFiles() {
+    try {
+      setMediaLoading(true);
+      setMediaError(null);
+      const res = await uploadApi.getBanners();
+      if (res && res.banners) {
+        setMediaFiles(res.banners);
+      }
+    } catch (err: any) {
+      setMediaError(err.message || "Failed to load banners");
+    } finally {
+      setMediaLoading(false);
+    }
+  }
+
+  function openAddBannerModal() {
+    setEditingBanner(null);
+    setBannerOverline("");
+    setBannerTitle("");
+    setBannerDescription("");
+    setBannerPrice("");
+    setBannerOriginalPrice("");
+    setBannerDiscount("");
+    setBannerCta("Shop Now");
+    setBannerHref("");
+    setBannerGradient("linear-gradient(135deg, #1a1c20 0%, #2a2d33 100%)");
+    setBannerImageUrl("");
+    setBannerModalOpen(true);
+  }
+
+  function openEditBannerModal(banner: any) {
+    setEditingBanner(banner);
+    setBannerOverline(banner.overline || "");
+    setBannerTitle(banner.title || "");
+    setBannerDescription(banner.description || "");
+    setBannerPrice(banner.price || "");
+    setBannerOriginalPrice(banner.originalPrice || "");
+    setBannerDiscount(banner.discount || "");
+    setBannerCta(banner.cta || "Shop Now");
+    setBannerHref(banner.href || "");
+    setBannerGradient(banner.gradient || "linear-gradient(135deg, #1a1c20 0%, #2a2d33 100%)");
+    setBannerImageUrl(banner.imageUrl || "");
+    setBannerModalOpen(true);
+  }
+
+  async function handleBannerSave(e: React.FormEvent) {
+    e.preventDefault();
+    
+    const newBanner = {
+      id: editingBanner ? editingBanner.id : Date.now().toString(),
+      overline: bannerOverline,
+      title: bannerTitle,
+      description: bannerDescription,
+      price: bannerPrice,
+      originalPrice: bannerOriginalPrice,
+      discount: bannerDiscount,
+      cta: bannerCta,
+      href: bannerHref,
+      gradient: bannerGradient,
+      imageUrl: bannerImageUrl,
+    };
+
+    let updatedBanners: any[] = [];
+    if (editingBanner) {
+      updatedBanners = mediaFiles.map((b) => (b.id === editingBanner.id ? newBanner : b));
+    } else {
+      updatedBanners = [...mediaFiles, newBanner];
+    }
+
+    try {
+      await uploadApi.updateBanners(updatedBanners);
+      alert("Homepage banners updated successfully!");
+      setBannerModalOpen(false);
+      loadMediaFiles();
+    } catch (err: any) {
+      alert(err.message || "Failed to save banner");
+    }
+  }
+
+  async function handleBannerDelete(bannerId: string) {
+    if (!confirm("Are you sure you want to remove this banner from homepage?")) return;
+    
+    const updatedBanners = mediaFiles.filter((b) => b.id !== bannerId);
+    try {
+      await uploadApi.updateBanners(updatedBanners);
+      alert("Banner removed successfully!");
+      loadMediaFiles();
+    } catch (err: any) {
+      alert(err.message || "Failed to remove banner");
+    }
+  }
+
+  async function handleBannerImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    try {
+      setMediaUploading(true);
+      const res = await uploadApi.uploadImage(file);
+      if (res && res.url) {
+        setBannerImageUrl(res.url);
+      }
+    } catch (err: any) {
+      alert(err.message || "Image upload failed");
+    } finally {
+      setMediaUploading(false);
+    }
+  }
+
   // Category Modal Handlers
   function openAddCatModal() {
     setEditingCat(null);
@@ -779,6 +924,10 @@ export default function AdminDashboard() {
     c.code?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredMedia = mediaFiles.filter(f => 
+    f.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const viewTitles: Record<AdminView, string> = {
     dashboard: "Dashboard",
     products: "Products",
@@ -787,6 +936,7 @@ export default function AdminDashboard() {
     categories: "Categories",
     brands: "Brands",
     coupons: "Coupons",
+    media: "Media Manager",
   };
 
   return (
@@ -833,7 +983,10 @@ export default function AdminDashboard() {
                 </button>
               );
             })}
-            <button className={styles["admin-nav__link"]} onClick={() => alert("Media management coming soon.")}>
+            <button 
+              className={`${styles["admin-nav__link"]} ${activeView === "media" ? styles["admin-nav__link--active"] : ""}`}
+              onClick={() => setActiveView("media")}
+            >
               <ImageIcon className={styles["admin-nav__icon"]} size={18} />
               Media
             </button>
@@ -1491,10 +1644,162 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Media View (Homepage Banner Manager) */}
+              {activeView === "media" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>Homepage Banners ({filteredMedia.length})</div>
+                    <div className={styles["admin-panel__actions"]}>
+                      <button className="btn btn--primary btn--sm" onClick={openAddBannerModal}>+ Add Banner</button>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Slide Preview</th>
+                          <th>Overline / Title</th>
+                          <th>Pricing Details</th>
+                          <th>CTA / Link</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mediaLoading ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>Loading banners...</td></tr>
+                        ) : mediaError ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-status-cancelled)" }}>{mediaError}</td></tr>
+                        ) : filteredMedia.length === 0 ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>No banners configured yet.</td></tr>
+                        ) : (
+                          filteredMedia.map((banner: any, index: number) => (
+                            <tr key={banner.id || index}>
+                              <td>
+                                <div style={{
+                                  width: 120,
+                                  height: 60,
+                                  borderRadius: "var(--border-radius-sm)",
+                                  border: "var(--border-hairline)",
+                                  background: banner.imageUrl 
+                                    ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(http://localhost:4000${banner.imageUrl}) center/cover no-repeat` 
+                                    : banner.gradient,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "#fff",
+                                  fontSize: 8,
+                                  fontWeight: 700,
+                                  textAlign: "center",
+                                  padding: 4,
+                                  textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                }}>
+                                  {banner.title}
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{banner.overline || "—"}</div>
+                                <div style={{ fontWeight: 600, color: "var(--color-text-primary)", marginTop: 2 }}>{banner.title}</div>
+                              </td>
+                              <td className={styles["data-table__mono"]} style={{ fontSize: "var(--text-sm)" }}>
+                                <div>Price: {banner.price || "—"}</div>
+                                <div style={{ textDecoration: "line-through", color: "var(--color-text-tertiary)", fontSize: "var(--text-xs)" }}>Original: {banner.originalPrice || "—"}</div>
+                                <div style={{ color: "var(--color-signal-amber)", fontSize: "var(--text-xs)", fontWeight: 600 }}>Discount: {banner.discount || "—"}</div>
+                              </td>
+                              <td style={{ fontSize: "var(--text-xs)" }}>
+                                <div>CTA: <strong>{banner.cta}</strong></div>
+                                <div style={{ color: "var(--color-text-tertiary)", marginTop: 2 }}>Link: {banner.href || "—"}</div>
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                  <button className="btn btn--secondary btn--sm" onClick={() => openEditBannerModal(banner)}>Edit</button>
+                                  <button className="btn btn--secondary btn--sm" style={{ color: "var(--color-status-cancelled)" }} onClick={() => handleBannerDelete(banner.id)}>Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
       </main>
+
+      {/* ── Add / Edit Banner Modal ── */}
+      {bannerModalOpen && (
+        <>
+          <div className="overlay overlay--visible" onClick={() => setBannerModalOpen(false)} style={{ zIndex: 999 }} />
+          <form onSubmit={handleBannerSave} className={styles.modal} style={{ zIndex: 1000 }}>
+            <div className={styles.modal__header}>
+              <h3 className={styles.modal__title}>
+                {editingBanner ? "Edit Homepage Banner" : "Add Homepage Banner"}
+              </h3>
+              <button className={styles.modal__close} type="button" onClick={() => setBannerModalOpen(false)}>×</button>
+            </div>
+            <div className={styles.modal__body}>
+              <div className={styles["form-grid"]}>
+                <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                  <label className="label">Banner Title <span style={{ color: "var(--color-signal-amber)" }}>*</span></label>
+                  <input type="text" className="input" required value={bannerTitle} onChange={(e) => setBannerTitle(e.target.value)} placeholder="e.g. Wireless ANC Earbuds Pro" />
+                </div>
+                <div className={styles["form-group"]}>
+                  <label className="label">Overline (Tagline)</label>
+                  <input type="text" className="input" value={bannerOverline} onChange={(e) => setBannerOverline(e.target.value)} placeholder="e.g. New Arrival" />
+                </div>
+                <div className={styles["form-group"]}>
+                  <label className="label">CTA Button Text</label>
+                  <input type="text" className="input" value={bannerCta} onChange={(e) => setBannerCta(e.target.value)} placeholder="e.g. Shop Now" />
+                </div>
+                <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                  <label className="label">Description <span style={{ color: "var(--color-signal-amber)" }}>*</span></label>
+                  <textarea className="textarea" required value={bannerDescription} onChange={(e) => setBannerDescription(e.target.value)} placeholder="Enter banner short description..." style={{ minHeight: 80 }} />
+                </div>
+                <div className={styles["form-group"]}>
+                  <label className="label">Discount Price (e.g. ৳2,990)</label>
+                  <input type="text" className="input" value={bannerPrice} onChange={(e) => setBannerPrice(e.target.value)} placeholder="e.g. ৳2,990" />
+                </div>
+                <div className={styles["form-group"]}>
+                  <label className="label">Original Price (e.g. ৳3,450)</label>
+                  <input type="text" className="input" value={bannerOriginalPrice} onChange={(e) => setBannerOriginalPrice(e.target.value)} placeholder="e.g. ৳3,450" />
+                </div>
+                <div className={styles["form-group"]}>
+                  <label className="label">Discount Tag (e.g. −13%)</label>
+                  <input type="text" className="input" value={bannerDiscount} onChange={(e) => setBannerDiscount(e.target.value)} placeholder="e.g. −13%" />
+                </div>
+                <div className={styles["form-group"]}>
+                  <label className="label">Destination URL</label>
+                  <input type="text" className="input" value={bannerHref} onChange={(e) => setBannerHref(e.target.value)} placeholder="e.g. /products/earbuds-pro" />
+                </div>
+                <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                  <label className="label">Banner Image <span style={{ color: "var(--color-signal-amber)" }}>*</span></label>
+                  <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
+                    <input type="text" className="input" required style={{ flex: 1 }} value={bannerImageUrl} readOnly placeholder="No image uploaded yet" />
+                    <label className="btn btn--secondary btn--sm" style={{ cursor: "pointer" }}>
+                      {mediaUploading ? "Uploading..." : "Upload Image"}
+                      <input type="file" onChange={handleBannerImageUpload} style={{ display: "none" }} />
+                    </label>
+                  </div>
+                  {bannerImageUrl && (
+                    <div style={{ marginTop: "var(--space-2)" }}>
+                      <img src={`http://localhost:4000${bannerImageUrl}`} alt="Banner preview" style={{ height: 80, borderRadius: "var(--border-radius-sm)", border: "var(--border-hairline)", background: "var(--color-bg)" }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className={styles.modal__footer}>
+              <button className="btn btn--secondary" type="button" onClick={() => setBannerModalOpen(false)}>Cancel</button>
+              <button className="btn btn--primary" type="submit">
+                {editingBanner ? "Save Changes" : "Create Banner"}
+              </button>
+            </div>
+          </form>
+        </>
+      )}
 
       {/* ── Add / Edit Product Modal ── */}
       {productModalOpen && (

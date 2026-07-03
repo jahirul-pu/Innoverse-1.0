@@ -25,6 +25,8 @@
   opacity: 1;
   pointer-events: auto;
   position: relative;
+  min-height: inherit;
+  width: 100%;
 }
 
 .hero__slide-content {

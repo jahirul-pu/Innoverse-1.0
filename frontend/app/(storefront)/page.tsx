@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import styles from "./Home.module.css";
 import { useCart } from "@/components/providers/CartContext";
-import { productApi, categoryApi } from "@/lib/api";
+import { productApi, categoryApi, uploadApi } from "@/lib/api";
 import { 
   ShieldCheck, 
   Banknote, 
@@ -206,6 +206,7 @@ function ProductCard({ product }: { product: any }) {
 /* ── Homepage ── */
 export default function HomePage() {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [heroSlides, setHeroSlides] = useState<any[]>([]);
   const [newArrivals, setNewArrivals] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);
   const [trending, setTrending] = useState<any[]>([]);
@@ -213,8 +214,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   const nextSlide = useCallback(() => {
-    setActiveSlide((prev) => (prev + 1) % mockHeroSlides.length);
-  }, []);
+    setActiveSlide((prev) => (prev + 1) % (heroSlides.length || 1));
+  }, [heroSlides]);
 
   // Auto-rotate carousel
   useEffect(() => {
@@ -226,11 +227,12 @@ export default function HomePage() {
   useEffect(() => {
     async function loadApiData() {
       try {
-        const [arrivalsRes, dealsRes, trendingRes, categoriesRes] = await Promise.all([
+        const [arrivalsRes, dealsRes, trendingRes, categoriesRes, bannersRes] = await Promise.all([
           productApi.list({ newArrival: true }),
           productApi.list({ featured: true }),
           productApi.list({ limit: 4 }),
           categoryApi.list(),
+          uploadApi.getBanners().catch(() => ({ banners: mockHeroSlides })),
         ]);
 
         if (arrivalsRes && arrivalsRes.products) {
@@ -262,12 +264,19 @@ export default function HomePage() {
         } else {
           setCategories(mockCategoryTiles);
         }
+
+        if (bannersRes && bannersRes.banners) {
+          setHeroSlides(bannersRes.banners);
+        } else {
+          setHeroSlides(mockHeroSlides);
+        }
       } catch (err) {
         console.error("Failed to load live data, using mock fallback", err);
         setNewArrivals(mockNewArrivals);
         setDeals(mockDeals);
         setTrending(mockTrending);
         setCategories(mockCategoryTiles);
+        setHeroSlides(mockHeroSlides);
       } finally {
         setLoading(false);
       }
@@ -279,74 +288,82 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero Carousel ── */}
-      <section className={styles.hero} id="hero-carousel">
-        <div className={styles.hero__carousel}>
-          {mockHeroSlides.map((slide, index) => (
-            <div
-              key={slide.id}
-              className={`${styles.hero__slide} ${
-                index === activeSlide ? styles["hero__slide--active"] : ""
-              }`}
-              style={{ background: slide.gradient }}
-            >
-              <div className={styles["hero__slide-content"]}>
-                <span className={styles["hero__slide-overline"]}>
-                  {slide.overline}
-                </span>
-                <h1
-                  className={styles["hero__slide-title"]}
-                  style={{ color: "#EDEFF0" }}
-                >
-                  {slide.title}
-                </h1>
-                <p
-                  className={styles["hero__slide-description"]}
-                  style={{ color: "#A0A4AA" }}
-                >
-                  {slide.description}
-                </p>
-                <div className={styles["hero__slide-price"]}>
-                  <span style={{ color: "#EDEFF0" }}>{slide.price}</span>
-                  <span className={styles["hero__slide-price-original"]}>
-                    {slide.originalPrice}
+      <section id="hero-carousel" style={{ marginTop: "var(--space-6)" }}>
+        <div className="container">
+          <div className={styles.hero} style={{ borderRadius: "var(--border-radius-lg)", overflow: "hidden" }}>
+            <div className={styles.hero__carousel}>
+              {heroSlides.map((slide, index) => (
+              <div
+                key={slide.id}
+                className={`${styles.hero__slide} ${
+                  index === activeSlide ? styles["hero__slide--active"] : ""
+                }`}
+                style={{ 
+                  background: slide.imageUrl 
+                    ? `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url(http://localhost:4000${slide.imageUrl}) center/cover no-repeat` 
+                    : slide.gradient 
+                }}
+              >
+                <div className={styles["hero__slide-content"]}>
+                  <span className={styles["hero__slide-overline"]}>
+                    {slide.overline}
                   </span>
-                  <span
-                    style={{
-                      color: "var(--color-signal-amber)",
-                      fontSize: "var(--text-sm)",
-                      marginLeft: "var(--space-2)",
-                    }}
+                  <h1
+                    className={styles["hero__slide-title"]}
+                    style={{ color: "#EDEFF0" }}
                   >
-                    {slide.discount}
-                  </span>
-                </div>
-                <div className={styles["hero__slide-actions"]}>
-                  <Link href={slide.href} className="btn btn--primary btn--lg">
-                    {slide.cta}
-                  </Link>
-                  <Link href="/deals" className="btn btn--secondary btn--lg" style={{ color: "#EDEFF0", borderColor: "#3a3d44" }}>
-                    View All Deals
-                  </Link>
+                    {slide.title}
+                  </h1>
+                  <p
+                    className={styles["hero__slide-description"]}
+                    style={{ color: "#A0A4AA" }}
+                  >
+                    {slide.description}
+                  </p>
+                  <div className={styles["hero__slide-price"]}>
+                    <span style={{ color: "#EDEFF0" }}>{slide.price}</span>
+                    <span className={styles["hero__slide-price-original"]}>
+                      {slide.originalPrice}
+                    </span>
+                    <span
+                      style={{
+                        color: "var(--color-signal-amber)",
+                        fontSize: "var(--text-sm)",
+                        marginLeft: "var(--space-2)",
+                      }}
+                    >
+                      {slide.discount}
+                    </span>
+                  </div>
+                  <div className={styles["hero__slide-actions"]}>
+                    <Link href={slide.href || "/products"} className="btn btn--primary btn--lg">
+                      {slide.cta || "Shop Now"}
+                    </Link>
+                    <Link href="/deals" className="btn btn--secondary btn--lg" style={{ color: "#EDEFF0", borderColor: "#3a3d44" }}>
+                      View All Deals
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-
-          {/* Carousel Dots */}
-          <div className={styles.hero__controls}>
-            {mockHeroSlides.map((_, index) => (
-              <button
-                key={index}
-                className={`${styles.hero__dot} ${
-                  index === activeSlide ? styles["hero__dot--active"] : ""
-                }`}
-                onClick={() => setActiveSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
-              />
             ))}
+
+            {/* Carousel Dots */}
+            <div className={styles.hero__controls}>
+              {heroSlides.map((_, index) => (
+                <button
+                  key={index}
+                  className={`${styles.hero__dot} ${
+                    index === activeSlide ? styles["hero__dot--active"] : ""
+                  }`}
+                  onClick={() => setActiveSlide(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
       {/* ── Trust Strip ── */}
       <section className={styles["trust-strip"]} id="trust-strip">
