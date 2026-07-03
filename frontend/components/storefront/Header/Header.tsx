@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { useAuth } from "@/components/providers/AuthContext";
 import { useCart } from "@/components/providers/CartContext";
+import { useWishlist } from "@/components/providers/WishlistContext";
 import CartDrawer from "@/components/storefront/CartDrawer/CartDrawer";
 import styles from "./Header.module.css";
 
@@ -69,6 +70,7 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
   const { items: cartItems } = useCart();
+  const { items: wishlistItems } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
@@ -169,12 +171,15 @@ export default function Header() {
 
             {/* Wishlist */}
             <Link
-              href="/account/wishlist"
+              href="/favourites"
               className={styles["header__action-btn"]}
               aria-label="Wishlist"
               id="header-wishlist"
             >
               <HeartIcon />
+              {wishlistItems.length > 0 && (
+                <span className={styles["header__cart-badge"]}>{wishlistItems.length}</span>
+              )}
             </Link>
 
             {/* Account */}

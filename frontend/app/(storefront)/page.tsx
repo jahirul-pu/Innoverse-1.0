@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import styles from "./Home.module.css";
 import { useCart } from "@/components/providers/CartContext";
+import { useWishlist } from "@/components/providers/WishlistContext";
 import { productApi, categoryApi, uploadApi } from "@/lib/api";
 import { 
   ShieldCheck, 
@@ -17,7 +18,8 @@ import {
   Plug, 
   Camera, 
   Folder,
-  PlugZap
+  PlugZap,
+  Heart
 } from "lucide-react";
 
 export interface APIProduct {
@@ -130,6 +132,8 @@ const ArrowRightIcon = () => (
 /* ── Product Card Component ── */
 function ProductCard({ product }: { product: any }) {
   const { addItem } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const isFavorited = isInWishlist(product.id);
   const price = Number(product.price);
   const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
   const discount = comparePrice && comparePrice > price
@@ -149,6 +153,26 @@ function ProductCard({ product }: { product: any }) {
         {discount && (
           <span className={styles["product-card__discount-badge"]}>{discount}</span>
         )}
+        <button
+          className={`${styles["product-card__wishlist"]} ${isFavorited ? styles["product-card__wishlist--active"] : ""}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleWishlist({
+              id: product.id,
+              name: product.name,
+              slug: product.slug,
+              price: product.price,
+              compareAtPrice: product.compareAtPrice,
+              stock: product.stock,
+              images: product.images,
+              brand: product.brand,
+            });
+          }}
+          aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart size={16} fill={isFavorited ? "currentColor" : "none"} />
+        </button>
         <button
           className={styles["product-card__quick-add"]}
           onClick={async (e) => {

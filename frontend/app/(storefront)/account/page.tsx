@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import styles from "./Account.module.css";
 import trackStyles from "../track/Tracking.module.css";
+import { useWishlist } from "@/components/providers/WishlistContext";
 
 const orders = [
   { id: "INV-2026-001547", date: "Jun 30, 2026", items: 3, total: 5630, status: "shipped" as const },
@@ -13,13 +14,7 @@ const orders = [
   { id: "INV-2026-001089", date: "May 15, 2026", items: 4, total: 12560, status: "cancelled" as const },
 ];
 
-const navItems = [
-  { icon: "📦", label: "Orders", key: "orders", badge: "2" },
-  { icon: "👤", label: "Profile", key: "profile" },
-  { icon: "📍", label: "Addresses", key: "addresses" },
-  { icon: "❤️", label: "Wishlist", key: "wishlist", badge: "5" },
-  { icon: "🔔", label: "Notifications", key: "notifications" },
-];
+
 
 function formatBDT(amount: number) {
   return `৳${amount.toLocaleString("en-BD")}`;
@@ -27,6 +22,15 @@ function formatBDT(amount: number) {
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("orders");
+  const { items: wishlistItems } = useWishlist();
+
+  const navItems = [
+    { icon: "📦", label: "Orders", key: "orders", badge: "2" },
+    { icon: "👤", label: "Profile", key: "profile" },
+    { icon: "📍", label: "Addresses", key: "addresses" },
+    { icon: "❤️", label: "Wishlist", key: "wishlist", badge: wishlistItems.length > 0 ? String(wishlistItems.length) : undefined },
+    { icon: "🔔", label: "Notifications", key: "notifications" },
+  ];
 
   return (
     <div className={`container ${styles["account-page"]}`}>
@@ -182,10 +186,13 @@ export default function AccountPage() {
           {/* Wishlist Tab */}
           {activeTab === "wishlist" && (
             <div className={styles["account-section"]}>
-              <h2 className={styles["account-section__title"]}>Wishlist (5 items)</h2>
-              <p style={{ fontSize: "var(--text-sm)", color: "var(--color-text-tertiary)" }}>
+              <h2 className={styles["account-section__title"]}>Wishlist ({wishlistItems.length} {wishlistItems.length === 1 ? "item" : "items"})</h2>
+              <p style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)", marginBottom: "var(--space-4)" }}>
                 Your saved items will appear here. Browse products and click the heart icon to add them.
               </p>
+              <Link href="/favourites" className="btn btn--primary btn--sm" style={{ display: "inline-flex" }}>
+                View & Manage Favourites
+              </Link>
             </div>
           )}
 

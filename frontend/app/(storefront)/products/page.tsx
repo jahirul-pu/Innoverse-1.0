@@ -4,13 +4,14 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/components/providers/CartContext";
+import { useWishlist } from "@/components/providers/WishlistContext";
 import { productApi } from "@/lib/api";
 import styles from "./ProductListing.module.css";
 
 /* ── Reuse product card styles from homepage ── */
 import homeStyles from "../Home.module.css";
 
-import { Search } from "lucide-react";
+import { Search, Heart } from "lucide-react";
 
 /* ── Icons ── */
 const FilterIcon = () => (
@@ -70,6 +71,8 @@ const mockFallbackProducts = [
 /* ── Product Card (Grid View) ── */
 function ProductCardGrid({ product }: { product: any }) {
   const { addItem } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const isFavorited = isInWishlist(product.id);
   const price = Number(product.price);
   const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
   const discount = comparePrice && comparePrice > price
@@ -88,6 +91,26 @@ function ProductCardGrid({ product }: { product: any }) {
         {discount && (
           <span className={homeStyles["product-card__discount-badge"]}>{discount}</span>
         )}
+        <button
+          className={`${homeStyles["product-card__wishlist"]} ${isFavorited ? homeStyles["product-card__wishlist--active"] : ""}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleWishlist({
+              id: product.id,
+              name: product.name,
+              slug: product.slug,
+              price: product.price,
+              compareAtPrice: product.compareAtPrice,
+              stock: product.stock,
+              images: product.images,
+              brand: product.brand,
+            });
+          }}
+          aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart size={16} fill={isFavorited ? "currentColor" : "none"} />
+        </button>
         <button
           className={homeStyles["product-card__quick-add"]}
           onClick={async (e) => {

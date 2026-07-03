@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCart } from "@/components/providers/CartContext";
 import { useToast } from "@/components/providers/ToastContext";
+import { useWishlist } from "@/components/providers/WishlistContext";
 import { productApi } from "@/lib/api";
 import styles from "./ProductDetail.module.css";
 import homeStyles from "../../Home.module.css";
 
 /* ── Icons ── */
-const HeartIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const HeartIcon = ({ fill = "none" }: { fill?: string }) => (
+  <svg viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
   </svg>
 );
@@ -87,6 +88,7 @@ export default function ProductDetailPage() {
   const slug = params.slug as string;
   const { addItem } = useCart();
   const { toast } = useToast();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [product, setProduct] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
@@ -359,8 +361,25 @@ export default function ProductDetailPage() {
             >
               Buy Now
             </button>
-            <button className={styles["pdp__wishlist-btn"]} aria-label="Add to wishlist" id="wishlist-btn">
-              <HeartIcon />
+            <button 
+              className={`${styles["pdp__wishlist-btn"]} ${isInWishlist(product.id) ? styles["pdp__wishlist-btn--active"] : ""}`} 
+              aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"} 
+              id="wishlist-btn"
+              onClick={() => toggleWishlist({
+                id: product.id,
+                name: product.name,
+                slug: product.slug || slug,
+                price: price,
+                compareAtPrice: product.compareAtPrice,
+                stock: currentStock,
+                images: product.images,
+                brand: product.brand,
+              })}
+              style={{
+                color: isInWishlist(product.id) ? "var(--color-signal-amber)" : "inherit"
+              }}
+            >
+              <HeartIcon fill={isInWishlist(product.id) ? "currentColor" : "none"} />
             </button>
             <button className={styles["pdp__share-btn"]} aria-label="Share product" id="share-btn">
               <ShareIcon />
