@@ -202,18 +202,20 @@ function FilterContent({
 }: FilterContentProps) {
   return (
     <div className={styles["filters-content"]}>
-      {/* Category Filter */}
+      {/* Availability Filter */}
       <div className={styles["filter-group"]}>
-        <h4 className={styles["filter-group__title"]}>Categories</h4>
+        <div className={styles["filter-group__title"]}>Availability</div>
         <div className={styles["filter-group__options"]}>
-          {allCategories.map((cat) => (
-            <label key={cat.id} className={styles["filter-option"]}>
+          {["all", "in-stock", "out-of-stock"].map((opt) => (
+            <label key={opt} className={styles["filter-option"]}>
               <input
-                type="checkbox"
-                checked={selectedCategories.includes(cat.slug)}
-                onChange={() => toggleCategory(cat.slug)}
+                type="radio"
+                name="availability"
+                checked={availabilityFilter === opt}
+                onChange={() => setAvailabilityFilter(opt)}
+                className={styles["filter-option__checkbox"]}
               />
-              <span className={styles["filter-option__label"]}>{cat.name}</span>
+              {opt === "all" ? "All" : opt === "in-stock" ? "In Stock" : "Out of Stock"}
             </label>
           ))}
         </div>
@@ -221,57 +223,43 @@ function FilterContent({
 
       {/* Price Filter */}
       <div className={styles["filter-group"]}>
-        <h4 className={styles["filter-group__title"]}>Price Range (BDT)</h4>
-        <div className={styles["price-range-inputs"]}>
-          <input
-            type="number"
-            className={styles["price-input"]}
-            placeholder="Min"
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-          />
-          <span className={styles["price-range-separator"]}>to</span>
-          <input
-            type="number"
-            className={styles["price-input"]}
-            placeholder="Max"
-            value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-          />
+        <div className={styles["filter-group__title"]}>Price Range</div>
+        <div className={styles["price-range"]}>
+          <div className={styles["price-range__inputs"]}>
+            <input
+              type="number"
+              className={styles["price-range__input"]}
+              placeholder="Min"
+              value={priceMin}
+              onChange={(e) => setPriceMin(e.target.value)}
+            />
+            <span className={styles["price-range__separator"]}>—</span>
+            <input
+              type="number"
+              className={styles["price-range__input"]}
+              placeholder="Max"
+              value={priceMax}
+              onChange={(e) => setPriceMax(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Availability Filter */}
+      {/* Category Filter */}
       <div className={styles["filter-group"]}>
-        <h4 className={styles["filter-group__title"]}>Availability</h4>
+        <div className={styles["filter-group__title"]}>Category</div>
         <div className={styles["filter-group__options"]}>
-          <label className={styles["filter-option"]}>
-            <input
-              type="radio"
-              name="availability"
-              checked={availabilityFilter === "all"}
-              onChange={() => setAvailabilityFilter("all")}
-            />
-            <span className={styles["filter-option__label"]}>All Products</span>
-          </label>
-          <label className={styles["filter-option"]}>
-            <input
-              type="radio"
-              name="availability"
-              checked={availabilityFilter === "in-stock"}
-              onChange={() => setAvailabilityFilter("in-stock")}
-            />
-            <span className={styles["filter-option__label"]}>In Stock</span>
-          </label>
-          <label className={styles["filter-option"]}>
-            <input
-              type="radio"
-              name="availability"
-              checked={availabilityFilter === "out-of-stock"}
-              onChange={() => setAvailabilityFilter("out-of-stock")}
-            />
-            <span className={styles["filter-option__label"]}>Out of Stock</span>
-          </label>
+          {allCategories.map((cat) => (
+            <label key={cat.id} className={styles["filter-option"]}>
+              <input
+                type="checkbox"
+                checked={selectedCategories.includes(cat.slug)}
+                onChange={() => toggleCategory(cat.slug)}
+                className={styles["filter-option__checkbox"]}
+              />
+              {cat.name}
+            </label>
+          ))}
         </div>
       </div>
     </div>
