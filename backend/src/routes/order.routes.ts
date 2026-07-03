@@ -311,6 +311,64 @@ orderRoutes.get("/:orderNumber", async (req: Request, res: Response) => {
   return res.json({ order });
 });
 
+// ── Validate Coupon ─────────────────────────────────────────
+// POST /api/orders/validate-coupon
+const validateCouponSchema = z.object({
+  code: z.string(),
+  subtotal: z.number().nonnegative(),
+});
+
+orderRoutes.post("/validate-coupon", async (req: Request, res: Response) => {
+  try {
+    const { code, subtotal } = validateCouponSchema.parse(req.body);
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: code.toUpperCase(), isActive: true },
+    });
+
+    if (!coupon) {
+      return res.status(400).json({ error: "Invalid coupon code" });
+    }
+
+    if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+      return res.status(400).json({ error: "Coupon has expired" });
+    }
+
+    if (coupon.minOrderAmount && subtotal < Number(coupon.minOrderAmount)) {
+      return res.status(400).json({ 
+        error: `Minimum order amount of ৳${Number(coupon.minOrderAmount)} is required to use this coupon.` 
+      });
+    }
+
+    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+      return res.status(400).json({ error: "Coupon usage limit reached" });
+    }
+
+    // Calculate discount amount
+    let discount = 0;
+    if (coupon.discountType === "PERCENTAGE") {
+      discount = subtotal * (Number(coupon.discountValue) / 100);
+      if (coupon.maxDiscount) {
+        discount = Math.min(discount, Number(coupon.maxDiscount));
+      }
+    } else {
+      discount = Number(coupon.discountValue);
+    }
+
+    return res.json({
+      valid: true,
+      coupon: {
+        code: coupon.code,
+        discountType: coupon.discountType,
+        discountValue: Number(coupon.discountValue),
+        maxDiscount: coupon.maxDiscount ? Number(coupon.maxDiscount) : null,
+      },
+      discount,
+    });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message || "Failed to validate coupon" });
+  }
+});
+
 // ── Cancel Order ────────────────────────────────────────────
 // POST /api/orders/:orderNumber/cancel
 orderRoutes.post("/:orderNumber/cancel", requireAuth, async (req: Request, res: Response) => {

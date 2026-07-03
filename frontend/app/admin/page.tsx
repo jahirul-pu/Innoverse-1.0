@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthContext";
@@ -1127,7 +1127,7 @@ export default function AdminDashboard() {
                           <tr><td colSpan={7} style={{ textAlign: "center", padding: "var(--space-4)" }}>No orders found.</td></tr>
                         ) : (
                           filteredOrders.map((order: any) => (
-                            <>
+                            <Fragment key={order.id}>
                             <tr key={order.id} style={{ cursor: "pointer" }}>
                               <td className={styles["data-table__mono"]} onClick={() => toggleOrderDetails(order)}>
                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
@@ -1274,7 +1274,7 @@ export default function AdminDashboard() {
                                 </td>
                               </tr>
                             )}
-                            </>
+                            </Fragment>
                           ))
                         )}
                       </tbody>

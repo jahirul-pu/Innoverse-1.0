@@ -166,6 +166,12 @@ export const orderApi = {
 
   cancel: (orderNumber: string) =>
     request(`/orders/${orderNumber}/cancel`, { method: "POST" }),
+
+  validateCoupon: (code: string, subtotal: number) =>
+    request("/orders/validate-coupon", {
+      method: "POST",
+      body: JSON.stringify({ code, subtotal }),
+    }),
 };
 
 // ─── Admin ───────────────────────────────────────────────────

@@ -42,6 +42,12 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Coupon States
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<any>(null);
@@ -63,8 +69,48 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
+  // Calculate discount
+  let discount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === "PERCENTAGE") {
+      discount = subtotal * (appliedCoupon.discountValue / 100);
+      if (appliedCoupon.maxDiscount) {
+        discount = Math.min(discount, appliedCoupon.maxDiscount);
+      }
+    } else {
+      discount = appliedCoupon.discountValue;
+    }
+  }
+
   const shippingCost = deliveryZone === "dhaka" ? 60 : 120;
-  const total = subtotal + shippingCost;
+  const total = Math.max(0, subtotal + shippingCost - discount);
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponCode.trim()) return;
+
+    setCouponLoading(true);
+    setCouponError(null);
+
+    try {
+      const res = await orderApi.validateCoupon(couponCode.trim(), subtotal);
+      if (res.valid) {
+        setAppliedCoupon(res.coupon);
+        setCouponError(null);
+      }
+    } catch (err: any) {
+      setCouponError(err.message || "Invalid coupon code");
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError(null);
+  };
 
   // Handle Step 1 Validation
   const handleContinueToPayment = (e: React.MouseEvent) => {
@@ -95,6 +141,7 @@ export default function CheckoutPage() {
         paymentMethod: paymentMethod.toUpperCase() as any,
         deliveryZone,
         notes: notes || undefined,
+        couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         items: items.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -166,8 +213,22 @@ export default function CheckoutPage() {
           </p>
           <h4 style={{ marginTop: "var(--space-4)", marginBottom: "var(--space-2)" }}>Payment Summary</h4>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ color: "var(--color-text-secondary)" }}>Total Paid (COD):</span>
-            <strong>{formatBDT(total)}</strong>
+            <span style={{ color: "var(--color-text-secondary)" }}>Subtotal:</span>
+            <span>{formatBDT(Number(placedOrder.subtotal))}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-1)" }}>
+            <span style={{ color: "var(--color-text-secondary)" }}>Shipping:</span>
+            <span>{formatBDT(Number(placedOrder.shippingCost))}</span>
+          </div>
+          {Number(placedOrder.discount) > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-1)", color: "var(--color-circuit-green)" }}>
+              <span>Discount:</span>
+              <span>-{formatBDT(Number(placedOrder.discount))}</span>
+            </div>
+          )}
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "var(--space-2)", paddingTop: "var(--space-2)", borderTop: "var(--border-hairline)" }}>
+            <span style={{ fontWeight: "var(--weight-semibold)" }}>Total Amount ({placedOrder.paymentMethod}):</span>
+            <strong>{formatBDT(Number(placedOrder.total))}</strong>
           </div>
         </div>
         <Link href="/" className="btn btn--primary btn--lg btn--block">
@@ -546,10 +607,91 @@ export default function CheckoutPage() {
             <span>Shipping ({deliveryZone === "dhaka" ? "Dhaka" : "Outside"})</span>
             <span className={cartStyles["order-summary__row-value"]}>{formatBDT(shippingCost)}</span>
           </div>
+          {discount > 0 && (
+            <div className={cartStyles["order-summary__row"]} style={{ color: "var(--color-circuit-green)" }}>
+              <span>Discount</span>
+              <span className={cartStyles["order-summary__row-value"]}>-{formatBDT(discount)}</span>
+            </div>
+          )}
 
           <div className={cartStyles["order-summary__total"]}>
             <span className={cartStyles["order-summary__total-label"]}>Total</span>
             <span className={cartStyles["order-summary__total-value"]}>{formatBDT(total)}</span>
+          </div>
+
+          {/* Coupon Code Section */}
+          <div style={{ marginTop: "var(--space-4)", paddingTop: "var(--space-4)", borderTop: "var(--border-divider)" }}>
+            <h3 style={{ fontSize: "var(--text-sm)", fontWeight: "var(--weight-semibold)", marginBottom: "var(--space-2)" }}>Promo / Coupon Code</h3>
+            
+            {appliedCoupon ? (
+              <div style={{ 
+                display: "flex", 
+                justifyContent: "space-between", 
+                alignItems: "center", 
+                padding: "var(--space-2) var(--space-3)", 
+                background: "rgba(16, 185, 129, 0.08)", 
+                border: "1px solid rgba(16, 185, 129, 0.2)", 
+                borderRadius: "var(--border-radius-md)" 
+              }}>
+                <div style={{ fontSize: "var(--text-sm)" }}>
+                  <span style={{ fontWeight: "var(--weight-bold)", color: "var(--color-circuit-green)", marginRight: "var(--space-2)" }}>{appliedCoupon.code}</span>
+                  <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>
+                    ({appliedCoupon.discountType === "PERCENTAGE" ? `${appliedCoupon.discountValue}%` : `৳${appliedCoupon.discountValue}`} Off)
+                  </span>
+                </div>
+                <button 
+                  onClick={handleRemoveCoupon}
+                  style={{ 
+                    background: "none", 
+                    border: "none", 
+                    color: "var(--color-status-cancelled)", 
+                    cursor: "pointer", 
+                    fontWeight: "var(--weight-semibold)", 
+                    fontSize: "var(--text-xs)" 
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyCoupon} style={{ display: "flex", gap: "var(--space-2)" }}>
+                <input
+                  type="text"
+                  placeholder="Enter code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  disabled={couponLoading}
+                  style={{
+                    flex: 1,
+                    fontFamily: "var(--font-body)",
+                    fontSize: "var(--text-xs)",
+                    padding: "var(--space-2) var(--space-3)",
+                    backgroundColor: "var(--color-bg)",
+                    border: "var(--border-hairline)",
+                    borderRadius: "var(--border-radius-md)",
+                    color: "var(--color-text-primary)",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={couponLoading || !couponCode.trim()}
+                  className="btn btn--secondary btn--sm"
+                  style={{ fontSize: "var(--text-xs)", padding: "var(--space-2) var(--space-4)" }}
+                >
+                  {couponLoading ? "..." : "Apply"}
+                </button>
+              </form>
+            )}
+            
+            {couponError && (
+              <div style={{ 
+                color: "var(--color-status-cancelled)", 
+                fontSize: "var(--text-xs)", 
+                marginTop: "var(--space-1)" 
+              }}>
+                {couponError}
+              </div>
+            )}
           </div>
         </div>
       </div>
