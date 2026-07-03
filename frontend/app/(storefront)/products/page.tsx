@@ -226,7 +226,6 @@ function FilterContent({
             <label key={opt} className={styles["filter-option"]}>
               <input
                 type="radio"
-                name="availability"
                 checked={availabilityFilter === opt}
                 onChange={() => setAvailabilityFilter(opt)}
                 className={styles["filter-option__checkbox"]}
