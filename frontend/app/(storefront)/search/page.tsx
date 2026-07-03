@@ -75,7 +75,6 @@ function ProductCard({ product }: { product: Product }) {
         <div className={homeStyles["product-card__pricing"]}>
           <span className={homeStyles["product-card__price"]}>{product.price}</span>
           {product.originalPrice && <span className={homeStyles["product-card__price-original"]}>{product.originalPrice}</span>}
-          {product.discount && <span className={homeStyles["product-card__price-discount"]}>{product.discount}</span>}
         </div>
       </div>
     </Link>

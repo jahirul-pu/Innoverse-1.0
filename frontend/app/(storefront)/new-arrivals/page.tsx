@@ -54,64 +54,10 @@ const CartPlusIcon = () => (
   </svg>
 );
 
-/* ── Product Card Grid ── */
-function ProductCardGrid({ product }: { product: any }) {
-  const { addItem } = useCart();
-  const price = Number(product.price);
-  const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
-  const discount = comparePrice && comparePrice > price
-    ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
-    : null;
-  const primaryImage = product.images?.[0]?.url;
+import ProductCard from "@/components/storefront/ProductCard/ProductCard";
 
-  return (
-    <Link href={`/products/${product.slug}`} className={homeStyles["product-card"]}>
-      <div className={homeStyles["product-card__image"]}>
-        {primaryImage ? (
-          <img src={primaryImage} alt={product.name} className={homeStyles["product-card__img"]} />
-        ) : (
-          <div className={homeStyles["product-card__image-placeholder"]}>📦</div>
-        )}
-        {discount && <span className={homeStyles["product-card__discount-badge"]}>{discount}</span>}
-        <button
-          className={homeStyles["product-card__quick-add"]}
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-              await addItem(product.id, 1, undefined, {
-                name: product.name,
-                slug: product.slug,
-                price: product.price,
-                compareAtPrice: product.compareAtPrice,
-                stock: product.stock,
-                images: product.images,
-                brand: product.brand,
-              });
-            } catch (err) {
-              console.error(err);
-            }
-          }}
-          aria-label={`Add ${product.name} to cart`}
-        >
-          <CartPlusIcon />
-        </button>
-      </div>
-      <div className={homeStyles["product-card__body"]}>
-        <span className={`${homeStyles["product-card__status"]} ${product.stock > 0 ? homeStyles["product-card__status--in-stock"] : homeStyles["product-card__status--out-of-stock"]}`}>
-          {product.stock > 0 ? "In Stock" : "Out of Stock"}
-        </span>
-        <span className={homeStyles["product-card__brand"]}>{product.brand?.name}</span>
-        <span className={homeStyles["product-card__name"]}>{product.name}</span>
-        <div className={homeStyles["product-card__pricing"]}>
-          <span className={homeStyles["product-card__price"]}>৳{price.toLocaleString("en-BD")}</span>
-          {comparePrice && <span className={homeStyles["product-card__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
-          {discount && <span className={homeStyles["product-card__price-discount"]}>{discount}</span>}
-        </div>
-      </div>
-    </Link>
-  );
-}
+/* ── Product Card Grid ── */
+const ProductCardGrid = ProductCard;
 
 /* ── Product Card List ── */
 function ProductCardList({ product }: { product: any }) {
@@ -150,7 +96,6 @@ function ProductCardList({ product }: { product: any }) {
           <div className={homeStyles["product-card__pricing"]}>
             <span className={homeStyles["product-card__price"]}>৳{price.toLocaleString("en-BD")}</span>
             {comparePrice && <span className={homeStyles["product-card__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
-            {discount && <span className={homeStyles["product-card__price-discount"]}>{discount}</span>}
           </div>
           <button
             className="btn btn--primary btn--sm"

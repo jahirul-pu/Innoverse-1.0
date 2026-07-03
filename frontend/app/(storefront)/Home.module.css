@@ -265,39 +265,16 @@
   border-radius: var(--border-radius-sm);
 }
 
-.product-card__quick-add {
-  position: absolute;
-  bottom: var(--space-2);
-  right: var(--space-2);
-  width: 36px;
-  height: 36px;
-  border-radius: var(--border-radius-md);
-  background-color: var(--color-surface);
-  border: var(--border-hairline);
+.product-card__image-link {
+  display: block;
+  width: 100%;
+}
+
+.product-card__actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-  opacity: 0;
-  transform: translateY(4px);
-  transition: all var(--duration-fast) var(--ease-out);
-}
-
-.product-card:hover .product-card__quick-add {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.product-card__quick-add:hover {
-  background-color: var(--color-signal-amber);
-  border-color: var(--color-signal-amber);
-  color: #fff;
-}
-
-.product-card__quick-add svg {
-  width: 16px;
-  height: 16px;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  z-index: 5;
 }
 
 .product-card__body {

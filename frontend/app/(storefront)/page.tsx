@@ -5,6 +5,7 @@ import Link from "next/link";
 import styles from "./Home.module.css";
 import { useCart } from "@/components/providers/CartContext";
 import { useWishlist } from "@/components/providers/WishlistContext";
+import ProductCard from "@/components/storefront/ProductCard/ProductCard";
 import { productApi, categoryApi, uploadApi } from "@/lib/api";
 import { 
   ShieldCheck, 
@@ -129,103 +130,7 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
-/* ── Product Card Component ── */
-function ProductCard({ product }: { product: any }) {
-  const { addItem } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
-  const isFavorited = isInWishlist(product.id);
-  const price = Number(product.price);
-  const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
-  const discount = comparePrice && comparePrice > price
-    ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
-    : null;
 
-  const primaryImage = product.images?.[0]?.url;
-
-  return (
-    <Link href={`/products/${product.slug}`} className={styles["product-card"]} id={`product-card-${product.id}`}>
-      <div className={styles["product-card__image"]}>
-        {primaryImage ? (
-          <img src={primaryImage} alt={product.name} className={styles["product-card__img"]} />
-        ) : (
-          <div className={styles["product-card__image-placeholder"]}>📦</div>
-        )}
-        {discount && (
-          <span className={styles["product-card__discount-badge"]}>{discount}</span>
-        )}
-        <button
-          className={`${styles["product-card__wishlist"]} ${isFavorited ? styles["product-card__wishlist--active"] : ""}`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleWishlist({
-              id: product.id,
-              name: product.name,
-              slug: product.slug,
-              price: product.price,
-              compareAtPrice: product.compareAtPrice,
-              stock: product.stock,
-              images: product.images,
-              brand: product.brand,
-            });
-          }}
-          aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          <Heart size={16} fill={isFavorited ? "currentColor" : "none"} />
-        </button>
-        <button
-          className={styles["product-card__quick-add"]}
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-              await addItem(product.id, 1, undefined, {
-                name: product.name,
-                slug: product.slug,
-                price: product.price,
-                compareAtPrice: product.compareAtPrice,
-                stock: product.stock,
-                images: product.images,
-                brand: product.brand,
-              });
-            } catch (err: any) {
-              console.error(err);
-            }
-          }}
-          aria-label={`Add ${product.name} to cart`}
-        >
-          <CartPlusIcon />
-        </button>
-      </div>
-      <div className={styles["product-card__body"]}>
-        <span
-          className={`${styles["product-card__status"]} ${
-            product.stock > 0
-              ? styles["product-card__status--in-stock"]
-              : styles["product-card__status--out-of-stock"]
-          }`}
-        >
-          {product.stock > 0 ? "In Stock" : "Out of Stock"}
-        </span>
-        <span className={styles["product-card__brand"]}>{product.brand?.name}</span>
-        <span className={styles["product-card__name"]}>{product.name}</span>
-        <div className={styles["product-card__pricing"]}>
-          <span className={styles["product-card__price"]}>৳{price.toLocaleString("en-BD")}</span>
-          {comparePrice && (
-            <span className={styles["product-card__price-original"]}>
-              ৳{comparePrice.toLocaleString("en-BD")}
-            </span>
-          )}
-          {discount && (
-            <span className={styles["product-card__price-discount"]}>
-              {discount}
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 /* ── Homepage ── */
 export default function HomePage() {

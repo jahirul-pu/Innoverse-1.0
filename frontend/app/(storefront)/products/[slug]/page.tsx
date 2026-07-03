@@ -265,7 +265,6 @@ export default function ProductDetailPage() {
           <div className={styles.pdp__pricing}>
             <span className={styles.pdp__price}>৳{price.toLocaleString("en-BD")}</span>
             {comparePrice && <span className={styles["pdp__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
-            {discount && <span className={styles["pdp__price-discount"]}>{discount}</span>}
             {savings && <span className={styles["pdp__price-savings"]}>{savings}</span>}
           </div>
 
@@ -559,7 +558,6 @@ export default function ProductDetailPage() {
                     <div className={homeStyles["product-card__pricing"]}>
                       <span className={homeStyles["product-card__price"]}>৳{rPrice.toLocaleString("en-BD")}</span>
                       {rCompare && <span className={homeStyles["product-card__price-original"]}>৳{rCompare.toLocaleString("en-BD")}</span>}
-                      {rDiscount && <span className={homeStyles["product-card__price-discount"]}>{rDiscount}</span>}
                     </div>
                   </div>
                 </Link>

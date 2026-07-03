@@ -7,6 +7,7 @@ import { useCart } from "@/components/providers/CartContext";
 import { useWishlist } from "@/components/providers/WishlistContext";
 import { productApi } from "@/lib/api";
 import styles from "./ProductListing.module.css";
+import ProductCard from "@/components/storefront/ProductCard/ProductCard";
 
 /* ── Reuse product card styles from homepage ── */
 import homeStyles from "../Home.module.css";
@@ -69,87 +70,7 @@ const mockFallbackProducts = [
 ];
 
 /* ── Product Card (Grid View) ── */
-function ProductCardGrid({ product }: { product: any }) {
-  const { addItem } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
-  const isFavorited = isInWishlist(product.id);
-  const price = Number(product.price);
-  const comparePrice = product.compareAtPrice ? Number(product.compareAtPrice) : null;
-  const discount = comparePrice && comparePrice > price
-    ? `−${Math.round(((comparePrice - price) / comparePrice) * 100)}%`
-    : null;
-  const primaryImage = product.images?.[0]?.url;
-
-  return (
-    <Link href={`/products/${product.slug}`} className={homeStyles["product-card"]} id={`listing-card-${product.id}`}>
-      <div className={homeStyles["product-card__image"]}>
-        {primaryImage ? (
-          <img src={primaryImage} alt={product.name} className={homeStyles["product-card__img"]} />
-        ) : (
-          <div className={homeStyles["product-card__image-placeholder"]}>📦</div>
-        )}
-        {discount && (
-          <span className={homeStyles["product-card__discount-badge"]}>{discount}</span>
-        )}
-        <button
-          className={`${homeStyles["product-card__wishlist"]} ${isFavorited ? homeStyles["product-card__wishlist--active"] : ""}`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleWishlist({
-              id: product.id,
-              name: product.name,
-              slug: product.slug,
-              price: product.price,
-              compareAtPrice: product.compareAtPrice,
-              stock: product.stock,
-              images: product.images,
-              brand: product.brand,
-            });
-          }}
-          aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          <Heart size={16} fill={isFavorited ? "currentColor" : "none"} />
-        </button>
-        <button
-          className={homeStyles["product-card__quick-add"]}
-          onClick={async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            try {
-              await addItem(product.id, 1, undefined, {
-                name: product.name,
-                slug: product.slug,
-                price: product.price,
-                compareAtPrice: product.compareAtPrice,
-                stock: product.stock,
-                images: product.images,
-                brand: product.brand,
-              });
-            } catch (err) {
-              console.error(err);
-            }
-          }}
-          aria-label={`Add ${product.name} to cart`}
-        >
-          <CartPlusIcon />
-        </button>
-      </div>
-      <div className={homeStyles["product-card__body"]}>
-        <span className={`${homeStyles["product-card__status"]} ${product.stock > 0 ? homeStyles["product-card__status--in-stock"] : homeStyles["product-card__status--out-of-stock"]}`}>
-          {product.stock > 0 ? "In Stock" : "Out of Stock"}
-        </span>
-        <span className={homeStyles["product-card__brand"]}>{product.brand?.name}</span>
-        <span className={homeStyles["product-card__name"]}>{product.name}</span>
-        <div className={homeStyles["product-card__pricing"]}>
-          <span className={homeStyles["product-card__price"]}>৳{price.toLocaleString("en-BD")}</span>
-          {comparePrice && <span className={homeStyles["product-card__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
-          {discount && <span className={homeStyles["product-card__price-discount"]}>{discount}</span>}
-        </div>
-      </div>
-    </Link>
-  );
-}
+const ProductCardGrid = ProductCard;
 
 /* ── Product Card (List View) ── */
 function ProductCardList({ product }: { product: any }) {
@@ -181,7 +102,6 @@ function ProductCardList({ product }: { product: any }) {
           <div className={styles["product-card-list__pricing"]}>
             <span className={styles["product-card-list__price"]}>৳{price.toLocaleString("en-BD")}</span>
             {comparePrice && <span className={styles["product-card-list__price-original"]}>৳{comparePrice.toLocaleString("en-BD")}</span>}
-            {discount && <span className={styles["product-card-list__discount"]}>{discount}</span>}
           </div>
           <button
             className="btn btn--primary btn--sm"
