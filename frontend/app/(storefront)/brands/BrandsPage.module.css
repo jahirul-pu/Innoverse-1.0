@@ -114,7 +114,7 @@
 .brand-card__avatar {
   width: 72px;
   height: 72px;
-  border-radius: var(--border-radius-full);
+  border-radius: var(--border-radius-md);
   background-color: var(--color-bg);
   border: var(--border-hairline);
   display: flex;
@@ -132,8 +132,7 @@
 .brand-card__logo-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: var(--space-2);
+  object-fit: cover;
 }
 
 .brand-card__initial {
