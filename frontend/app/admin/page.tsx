@@ -37,7 +37,9 @@ import {
   FolderOpen,
   PlugZap,
   Printer,
-  Tag
+  Tag,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 const categoryIconMap: Record<string, any> = {
@@ -109,6 +111,10 @@ export default function AdminDashboard() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Order detail expansion state
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [orderDetails, setOrderDetails] = useState<Record<string, any>>({});
 
   // Category modal state
   const [catModalOpen, setCatModalOpen] = useState(false);
@@ -513,6 +519,25 @@ export default function AdminDashboard() {
       loadAdminData();
     } catch (err: any) {
       alert(`Error updating order status: ${err.message || err}`);
+    }
+  }
+
+  // Toggle order detail expansion
+  async function toggleOrderDetails(order: any) {
+    if (expandedOrderId === order.id) {
+      setExpandedOrderId(null);
+      return;
+    }
+    setExpandedOrderId(order.id);
+    if (!orderDetails[order.id]) {
+      try {
+        const res = await fetch(`http://localhost:4000/api/orders/${order.orderNumber}`).then(r => r.json());
+        if (res.order) {
+          setOrderDetails(prev => ({ ...prev, [order.id]: res.order }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch order details", err);
+      }
     }
   }
 
@@ -1102,8 +1127,16 @@ export default function AdminDashboard() {
                           <tr><td colSpan={7} style={{ textAlign: "center", padding: "var(--space-4)" }}>No orders found.</td></tr>
                         ) : (
                           filteredOrders.map((order: any) => (
-                            <tr key={order.id}>
-                              <td className={styles["data-table__mono"]}><span className={styles["data-table__link"]}>{order.orderNumber}</span></td>
+                            <>
+                            <tr key={order.id} style={{ cursor: "pointer" }}>
+                              <td className={styles["data-table__mono"]} onClick={() => toggleOrderDetails(order)}>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
+                                  {expandedOrderId === order.id
+                                    ? <ChevronDown size={14} style={{ color: "var(--color-signal-amber)" }} />
+                                    : <ChevronRight size={14} style={{ color: "var(--color-text-tertiary)" }} />}
+                                  <span className={styles["data-table__link"]}>{order.orderNumber}</span>
+                                </span>
+                              </td>
                               <td>
                                 <div style={{ fontWeight: 500, color: "var(--color-text-primary)" }}>{order.user?.name || "Customer"}</div>
                                 <div style={{ fontFamily: "var(--font-data)", fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)" }}>{order.user?.phone}</div>
@@ -1190,6 +1223,58 @@ export default function AdminDashboard() {
                                 </div>
                               </td>
                             </tr>
+                            {/* Expanded Order Details Row */}
+                            {expandedOrderId === order.id && (
+                              <tr key={`${order.id}-details`}>
+                                <td colSpan={7} style={{ padding: 0, background: "var(--color-bg)" }}>
+                                  <div style={{
+                                    padding: "var(--space-3) var(--space-4)",
+                                    borderTop: "2px solid var(--color-signal-amber)",
+                                    borderBottom: "1px solid var(--color-border-light)",
+                                  }}>
+                                    {!orderDetails[order.id] ? (
+                                      <div style={{ textAlign: "center", padding: "var(--space-3)", color: "var(--color-text-tertiary)", fontSize: "var(--text-sm)" }}>Loading items...</div>
+                                    ) : (
+                                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "var(--text-sm)" }}>
+                                        <thead>
+                                          <tr>
+                                            <th style={{ textAlign: "left", padding: "6px 10px", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--color-border-light)" }}>Product</th>
+                                            <th style={{ textAlign: "center", padding: "6px 10px", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--color-border-light)" }}>Qty</th>
+                                            <th style={{ textAlign: "right", padding: "6px 10px", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--color-border-light)" }}>Unit Price</th>
+                                            <th style={{ textAlign: "right", padding: "6px 10px", fontSize: "var(--text-xs)", fontWeight: 700, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid var(--color-border-light)" }}>Total</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {orderDetails[order.id].items.map((item: any, idx: number) => (
+                                            <tr key={item.id} style={{ background: idx % 2 === 0 ? "var(--color-surface)" : "transparent" }}>
+                                              <td style={{ padding: "8px 10px", fontWeight: 500, color: "var(--color-text-primary)" }}>
+                                                <a
+                                                  href={`/products/${item.product?.slug || ""}`}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  style={{ color: "var(--color-signal-amber)", textDecoration: "none", fontWeight: 600, borderBottom: "1px dashed rgba(255, 90, 31, 0.3)" }}
+                                                  onMouseEnter={(e) => { e.currentTarget.style.borderBottomColor = "var(--color-signal-amber)"; }}
+                                                  onMouseLeave={(e) => { e.currentTarget.style.borderBottomColor = "rgba(255, 90, 31, 0.3)"; }}
+                                                >
+                                                  {item.productName}
+                                                </a>
+                                                {item.variantName && (
+                                                  <span style={{ fontSize: "var(--text-xs)", color: "var(--color-text-tertiary)", marginLeft: 6 }}>({item.variantName})</span>
+                                                )}
+                                              </td>
+                                              <td style={{ padding: "8px 10px", textAlign: "center", fontFamily: "var(--font-data)", color: "var(--color-text-secondary)" }}>{item.quantity}</td>
+                                              <td style={{ padding: "8px 10px", textAlign: "right", fontFamily: "var(--font-data)", color: "var(--color-text-secondary)" }}>{formatBDT(Number(item.unitPrice))}</td>
+                                              <td style={{ padding: "8px 10px", textAlign: "right", fontFamily: "var(--font-data)", fontWeight: 600, color: "var(--color-text-primary)" }}>{formatBDT(Number(item.total))}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                            </>
                           ))
                         )}
                       </tbody>
