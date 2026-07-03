@@ -58,8 +58,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             price: product.price,
             compareAtPrice: product.compareAtPrice,
             stock: product.stock,
-            images: product.images,
-            brand: product.brand,
+            images: product.images ? product.images.map(img => ({ url: img.url, alt: null })) : [],
+            brand: product.brand ? { name: product.brand.name } : undefined,
           });
         }}
         aria-label={isFavorited ? "Remove from wishlist" : "Add to wishlist"}
@@ -100,8 +100,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                   price: product.price,
                   compareAtPrice: product.compareAtPrice,
                   stock: product.stock,
-                  images: product.images,
-                  brand: product.brand,
+                  images: product.images ? product.images.map(img => ({ url: img.url, alt: null })) : [],
+                  brand: product.brand ? { name: product.brand.name } : undefined,
                 });
               } catch (err) {
                 console.error(err);
@@ -133,8 +133,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                   price: product.price,
                   compareAtPrice: product.compareAtPrice,
                   stock: product.stock,
-                  images: product.images,
-                  brand: product.brand,
+                  images: product.images ? product.images.map(img => ({ url: img.url, alt: null })) : [],
+                  brand: product.brand ? { name: product.brand.name } : undefined,
                 });
                 window.location.href = "/checkout";
               } catch (err) {
