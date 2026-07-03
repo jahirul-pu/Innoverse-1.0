@@ -1151,7 +1151,7 @@ export default function AdminDashboard() {
                                   style={{ padding: "var(--space-1) var(--space-2)", fontSize: "var(--text-xs)", cursor: "pointer", border: "var(--border-hairline)", borderRadius: "var(--border-radius-sm)", backgroundColor: "var(--color-surface)" }}
                                   onChange={(e) => handleOrderStatusUpdate(order.id, e.target.value)}
                                 >
-                                  {["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"].map((st) => (
+                                  {["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "RETURNED"].map((st) => (
                                     <option key={st} value={st}>{st}</option>
                                   ))}
                                 </select>

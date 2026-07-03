@@ -288,7 +288,7 @@ adminRoutes.get("/orders", async (req: Request, res: Response) => {
 
 // PATCH /api/admin/orders/:id/status
 const updateStatusSchema = z.object({
-  status: z.enum(["CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"]),
+  status: z.enum(["PENDING", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "RETURNED"]),
   trackingNumber: z.string().optional(),
   courierPartner: z.string().optional(),
   description: z.string().optional(),
@@ -299,12 +299,14 @@ adminRoutes.patch("/orders/:id/status", async (req: Request, res: Response) => {
   const { status, trackingNumber, courierPartner, description } = updateStatusSchema.parse(req.body);
 
   const statusTitles: Record<string, string> = {
+    PENDING: "Pending",
     CONFIRMED: "Order Confirmed",
     PROCESSING: "Processing",
     SHIPPED: "Shipped",
     OUT_FOR_DELIVERY: "Out for Delivery",
     DELIVERED: "Delivered",
     CANCELLED: "Cancelled",
+    RETURNED: "Returned",
   };
 
   const order = await prisma.$transaction(async (tx) => {
