@@ -106,7 +106,11 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleRemoveCoupon = () => {
+  const handleRemoveCoupon = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setAppliedCoupon(null);
     setCouponCode("");
     setCouponError(null);
@@ -640,7 +644,8 @@ export default function CheckoutPage() {
                   </span>
                 </div>
                 <button 
-                  onClick={handleRemoveCoupon}
+                  type="button"
+                  onClick={(e) => handleRemoveCoupon(e)}
                   style={{ 
                     background: "none", 
                     border: "none", 

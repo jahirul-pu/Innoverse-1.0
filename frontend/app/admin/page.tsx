@@ -16,6 +16,7 @@ import {
   Building2, 
   Ticket, 
   Image as ImageIcon, 
+  Sparkles,
   Bell, 
   Sun, 
   Moon, 
@@ -56,7 +57,7 @@ function renderCategoryIcon(slug: string, className?: string) {
   return <IconComponent size={20} className={className} />;
 }
 
-type AdminView = "dashboard" | "products" | "orders" | "customers" | "categories" | "brands" | "coupons" | "media";
+type AdminView = "dashboard" | "products" | "orders" | "customers" | "categories" | "brands" | "coupons" | "media" | "popups";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", key: "dashboard" as const },
@@ -108,10 +109,12 @@ export default function AdminDashboard() {
     setSearchQuery("");
   }, [activeView]);
 
-  // Fetch media files when changing to media tab
+  // Fetch media / popups files when tab active
   useEffect(() => {
     if (activeView === "media") {
       loadMediaFiles();
+    } else if (activeView === "popups") {
+      loadPopups();
     }
   }, [activeView]);
 
@@ -147,6 +150,17 @@ export default function AdminDashboard() {
   const [bannerHref, setBannerHref] = useState("");
   const [bannerGradient, setBannerGradient] = useState("linear-gradient(135deg, #1a1c20 0%, #2a2d33 100%)");
   const [bannerImageUrl, setBannerImageUrl] = useState("");
+
+  // Popup Manager States
+  const [popupsList, setPopupsList] = useState<any[]>([]);
+  const [popupsLoading, setPopupsLoading] = useState(false);
+  const [popupsError, setPopupsError] = useState<string | null>(null);
+  const [popupModalOpen, setPopupModalOpen] = useState(false);
+  const [editingPopup, setEditingPopup] = useState<any | null>(null);
+  const [popupTitle, setPopupTitle] = useState("");
+  const [popupImageUrl, setPopupImageUrl] = useState("");
+  const [popupHref, setPopupHref] = useState("");
+  const [popupIsActive, setPopupIsActive] = useState(true);
 
   // Order detail expansion state
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -686,6 +700,114 @@ export default function AdminDashboard() {
     }
   }
 
+  // ── Popup Manager Handlers ──────────────────────────────────
+  async function loadPopups() {
+    try {
+      setPopupsLoading(true);
+      setPopupsError(null);
+      const res = await uploadApi.getPopups();
+      if (res && res.popups) {
+        setPopupsList(res.popups);
+      }
+    } catch (err: any) {
+      setPopupsError(err.message || "Failed to load popups");
+    } finally {
+      setPopupsLoading(false);
+    }
+  }
+
+  function openAddPopupModal() {
+    setEditingPopup(null);
+    setPopupTitle("");
+    setPopupImageUrl("");
+    setPopupHref("");
+    setPopupIsActive(true);
+    setPopupModalOpen(true);
+  }
+
+  function openEditPopupModal(popup: any) {
+    setEditingPopup(popup);
+    setPopupTitle(popup.title || "");
+    setPopupImageUrl(popup.imageUrl || "");
+    setPopupHref(popup.href || "");
+    setPopupIsActive(popup.isActive ?? true);
+    setPopupModalOpen(true);
+  }
+
+  async function handlePopupSave(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!popupImageUrl) {
+      alert("Please upload a popup image.");
+      return;
+    }
+
+    const newPopup = {
+      id: editingPopup ? editingPopup.id : Date.now().toString(),
+      title: popupTitle,
+      imageUrl: popupImageUrl,
+      href: popupHref,
+      isActive: popupIsActive,
+    };
+
+    let updatedPopups: any[] = [];
+    if (editingPopup) {
+      updatedPopups = popupsList.map((p) => (p.id === editingPopup.id ? newPopup : p));
+    } else {
+      updatedPopups = [...popupsList, newPopup];
+    }
+
+    try {
+      await uploadApi.updatePopups(updatedPopups);
+      alert("Promotional popups updated successfully!");
+      setPopupModalOpen(false);
+      loadPopups();
+    } catch (err: any) {
+      alert(err.message || "Failed to save popup");
+    }
+  }
+
+  async function handlePopupDelete(popupId: string) {
+    if (!confirm("Are you sure you want to delete this promotional popup?")) return;
+    
+    const updatedPopups = popupsList.filter((p) => p.id !== popupId);
+    try {
+      await uploadApi.updatePopups(updatedPopups);
+      alert("Popup deleted successfully!");
+      loadPopups();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete popup");
+    }
+  }
+
+  async function handlePopupToggleActive(popup: any) {
+    const updatedPopups = popupsList.map((p) => 
+      p.id === popup.id ? { ...p, isActive: !p.isActive } : p
+    );
+    try {
+      await uploadApi.updatePopups(updatedPopups);
+      loadPopups();
+    } catch (err: any) {
+      alert(err.message || "Failed to toggle status");
+    }
+  }
+
+  async function handlePopupImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    try {
+      setMediaUploading(true);
+      const res = await uploadApi.uploadImage(file);
+      if (res && res.url) {
+        setPopupImageUrl(res.url);
+      }
+    } catch (err: any) {
+      alert(err.message || "Image upload failed");
+    } finally {
+      setMediaUploading(false);
+    }
+  }
+
   // Category Modal Handlers
   function openAddCatModal() {
     setEditingCat(null);
@@ -928,6 +1050,10 @@ export default function AdminDashboard() {
     f.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredPopups = popupsList.filter(p => 
+    p.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const viewTitles: Record<AdminView, string> = {
     dashboard: "Dashboard",
     products: "Products",
@@ -936,7 +1062,8 @@ export default function AdminDashboard() {
     categories: "Categories",
     brands: "Brands",
     coupons: "Coupons",
-    media: "Media Manager",
+    media: "Homepage Banners",
+    popups: "Promotional Popups",
   };
 
   return (
@@ -988,7 +1115,14 @@ export default function AdminDashboard() {
               onClick={() => setActiveView("media")}
             >
               <ImageIcon className={styles["admin-nav__icon"]} size={18} />
-              Media
+              Banners
+            </button>
+            <button 
+              className={`${styles["admin-nav__link"]} ${activeView === "popups" ? styles["admin-nav__link--active"] : ""}`}
+              onClick={() => setActiveView("popups")}
+            >
+              <Sparkles className={styles["admin-nav__icon"]} size={18} />
+              Popups
             </button>
           </div>
 
@@ -1724,6 +1858,85 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Promotional Popups View */}
+              {activeView === "popups" && (
+                <div className={styles["admin-panel"]}>
+                  <div className={styles["admin-panel__header"]}>
+                    <div className={styles["admin-panel__title"]}>Promotional Popups ({filteredPopups.length})</div>
+                    <div className={styles["admin-panel__actions"]}>
+                      <button className="btn btn--primary btn--sm" onClick={openAddPopupModal}>+ Add Popup</button>
+                    </div>
+                  </div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table className={styles["data-table"]}>
+                      <thead>
+                        <tr>
+                          <th>Popup Image</th>
+                          <th>Title</th>
+                          <th>Target URL</th>
+                          <th>Active State</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {popupsLoading ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>Loading popups...</td></tr>
+                        ) : popupsError ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)", color: "var(--color-status-cancelled)" }}>{popupsError}</td></tr>
+                        ) : filteredPopups.length === 0 ? (
+                          <tr><td colSpan={5} style={{ textAlign: "center", padding: "var(--space-4)" }}>No popups configured yet.</td></tr>
+                        ) : (
+                          filteredPopups.map((popup: any, index: number) => (
+                            <tr key={popup.id || index}>
+                              <td>
+                                {popup.imageUrl ? (
+                                  <img 
+                                    src={`http://localhost:4000${popup.imageUrl}`} 
+                                    alt={popup.title} 
+                                    style={{ height: 60, width: "auto", borderRadius: "var(--border-radius-sm)", border: "var(--border-hairline)", background: "var(--color-bg)" }} 
+                                  />
+                                ) : (
+                                  <span style={{ color: "var(--color-text-tertiary)" }}>No Image</span>
+                                )}
+                              </td>
+                              <td style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>
+                                {popup.title}
+                              </td>
+                              <td style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
+                                {popup.href || "—"}
+                              </td>
+                              <td>
+                                <button 
+                                  className={`btn ${popup.isActive ? "btn--success" : "btn--secondary"} btn--sm`}
+                                  style={{
+                                    padding: "4px 8px",
+                                    fontSize: "11px",
+                                    backgroundColor: popup.isActive ? "rgba(40, 167, 69, 0.1)" : "rgba(108, 117, 125, 0.1)",
+                                    color: popup.isActive ? "#28a745" : "#6c757d",
+                                    border: popup.isActive ? "1px solid #28a745" : "1px solid #6c757d",
+                                    borderRadius: "4px",
+                                    cursor: "pointer"
+                                  }}
+                                  onClick={() => handlePopupToggleActive(popup)}
+                                >
+                                  {popup.isActive ? "Active" : "Disabled"}
+                                </button>
+                              </td>
+                              <td>
+                                <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                                  <button className="btn btn--secondary btn--sm" onClick={() => openEditPopupModal(popup)}>Edit</button>
+                                  <button className="btn btn--secondary btn--sm" style={{ color: "var(--color-status-cancelled)" }} onClick={() => handlePopupDelete(popup.id)}>Delete</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1795,6 +2008,60 @@ export default function AdminDashboard() {
               <button className="btn btn--secondary" type="button" onClick={() => setBannerModalOpen(false)}>Cancel</button>
               <button className="btn btn--primary" type="submit">
                 {editingBanner ? "Save Changes" : "Create Banner"}
+              </button>
+            </div>
+          </form>
+        </>
+      )}
+
+      {/* ── Add / Edit Popup Modal ── */}
+      {popupModalOpen && (
+        <>
+          <div className="overlay overlay--visible" onClick={() => setPopupModalOpen(false)} style={{ zIndex: 999 }} />
+          <form onSubmit={handlePopupSave} className={styles.modal} style={{ zIndex: 1000 }}>
+            <div className={styles.modal__header}>
+              <h3 className={styles.modal__title}>
+                {editingPopup ? "Edit Promotional Popup" : "Add Promotional Popup"}
+              </h3>
+              <button className={styles.modal__close} type="button" onClick={() => setPopupModalOpen(false)}>×</button>
+            </div>
+            <div className={styles.modal__body}>
+              <div className={styles["form-grid"]}>
+                <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                  <label className="label">Popup Campaign Title <span style={{ color: "var(--color-signal-amber)" }}>*</span></label>
+                  <input type="text" className="input" required value={popupTitle} onChange={(e) => setPopupTitle(e.target.value)} placeholder="e.g. 10% Welcome Discount Promo" />
+                </div>
+                <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                  <label className="label">Destination/Target URL</label>
+                  <input type="text" className="input" value={popupHref} onChange={(e) => setPopupHref(e.target.value)} placeholder="e.g. /coupons or /products/earbuds-pro" />
+                </div>
+                <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                  <label className="label">Popup Image <span style={{ color: "var(--color-signal-amber)" }}>*</span></label>
+                  <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
+                    <input type="text" className="input" required style={{ flex: 1 }} value={popupImageUrl} readOnly placeholder="No image uploaded yet" />
+                    <label className="btn btn--secondary btn--sm" style={{ cursor: "pointer" }}>
+                      {mediaUploading ? "Uploading..." : "Upload Image"}
+                      <input type="file" onChange={handlePopupImageUpload} style={{ display: "none" }} />
+                    </label>
+                  </div>
+                  {popupImageUrl && (
+                    <div style={{ marginTop: "var(--space-2)" }}>
+                      <img src={`http://localhost:4000${popupImageUrl}`} alt="Popup preview" style={{ maxHeight: 150, borderRadius: "var(--border-radius-sm)", border: "var(--border-hairline)", background: "var(--color-bg)" }} />
+                    </div>
+                  )}
+                </div>
+                <div className={`${styles["form-group"]} ${styles["form-col-span-2"]}`}>
+                  <label className="label" style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={popupIsActive} onChange={(e) => setPopupIsActive(e.target.checked)} />
+                    <span>Make this popup active on the website homepage</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className={styles.modal__footer}>
+              <button className="btn btn--secondary" type="button" onClick={() => setPopupModalOpen(false)}>Cancel</button>
+              <button className="btn btn--primary" type="submit">
+                {editingPopup ? "Save Changes" : "Create Popup"}
               </button>
             </div>
           </form>

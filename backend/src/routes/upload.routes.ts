@@ -156,4 +156,62 @@ uploadRoutes.post("/banners", async (req: Request, res: Response) => {
   }
 });
 
+const POPUPS_FILE = path.join(process.env.UPLOAD_DIR || "uploads", "popups.json");
+
+const defaultPopups = [
+  {
+    id: "1",
+    title: "Exclusive Welcome Coupon",
+    imageUrl: "/uploads/placeholder-popup.jpg",
+    href: "/coupons",
+    isActive: true,
+  }
+];
+
+// GET /api/upload/popups
+uploadRoutes.get("/popups", async (_req: Request, res: Response) => {
+  try {
+    const uploadDir = process.env.UPLOAD_DIR || "uploads";
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+
+    try {
+      await fs.access(POPUPS_FILE);
+    } catch {
+      await fs.writeFile(POPUPS_FILE, JSON.stringify(defaultPopups, null, 2), "utf-8");
+    }
+
+    const content = await fs.readFile(POPUPS_FILE, "utf-8");
+    const popups = JSON.parse(content);
+    return res.json({ popups });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to load popups" });
+  }
+});
+
+// POST /api/upload/popups
+uploadRoutes.post("/popups", async (req: Request, res: Response) => {
+  try {
+    const { popups } = req.body;
+    if (!Array.isArray(popups)) {
+      return res.status(400).json({ error: "Popups must be an array" });
+    }
+
+    const uploadDir = process.env.UPLOAD_DIR || "uploads";
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+
+    await fs.writeFile(POPUPS_FILE, JSON.stringify(popups, null, 2), "utf-8");
+    return res.json({ message: "Popups updated successfully", popups });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to update popups" });
+  }
+});
+
 

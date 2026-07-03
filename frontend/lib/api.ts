@@ -264,6 +264,14 @@ export const uploadApi = {
       method: "POST",
       body: JSON.stringify({ banners }),
     }),
+
+  getPopups: () => request("/upload/popups"),
+
+  updatePopups: (popups: any[]) =>
+    request("/upload/popups", {
+      method: "POST",
+      body: JSON.stringify({ popups }),
+    }),
 };
 
 export { ApiError };

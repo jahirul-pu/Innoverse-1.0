@@ -213,6 +213,10 @@ export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Popup states
+  const [activePopup, setActivePopup] = useState<any | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+
   const nextSlide = useCallback(() => {
     setActiveSlide((prev) => (prev + 1) % (heroSlides.length || 1));
   }, [heroSlides]);
@@ -269,6 +273,23 @@ export default function HomePage() {
           setHeroSlides(bannersRes.banners);
         } else {
           setHeroSlides(mockHeroSlides);
+        }
+
+        // Fetch active popup campaign
+        try {
+          const popupRes = await uploadApi.getPopups();
+          if (popupRes && popupRes.popups) {
+            const active = popupRes.popups.find((p: any) => p.isActive);
+            if (active) {
+              const hasSeen = sessionStorage.getItem(`seen_popup_${active.id}`);
+              if (!hasSeen) {
+                setActivePopup(active);
+                setShowPopup(true);
+              }
+            }
+          }
+        } catch (popupErr) {
+          console.error("Failed to load popups on homepage", popupErr);
         }
       } catch (err) {
         console.error("Failed to load live data, using mock fallback", err);
@@ -450,6 +471,85 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Promotional Popup Overlay */}
+      {showPopup && activePopup && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.75)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999,
+          padding: "var(--space-4)",
+          backdropFilter: "blur(4px)"
+        }}>
+          <div style={{
+            position: "relative",
+            maxWidth: "480px",
+            width: "100%",
+            borderRadius: "var(--border-radius-lg)",
+            overflow: "hidden",
+            backgroundColor: "var(--color-surface)",
+            boxShadow: "var(--shadow-lg)",
+            border: "var(--border-hairline)",
+          }}>
+            <button 
+              onClick={() => {
+                setShowPopup(false);
+                sessionStorage.setItem(`seen_popup_${activePopup.id}`, "true");
+              }}
+              style={{
+                position: "absolute",
+                top: "12px",
+                right: "12px",
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(0,0,0,0.5)",
+                color: "#fff",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                zIndex: 10,
+                transition: "background-color 0.2s"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.7)"}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.5)"}
+            >
+              ×
+            </button>
+            <div style={{ position: "relative", width: "100%" }}>
+              {activePopup.href ? (
+                <Link 
+                  href={activePopup.href}
+                  onClick={() => {
+                    setShowPopup(false);
+                    sessionStorage.setItem(`seen_popup_${activePopup.id}`, "true");
+                  }}
+                >
+                  <img 
+                    src={`http://localhost:4000${activePopup.imageUrl}`} 
+                    alt={activePopup.title}
+                    style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
+                  />
+                </Link>
+              ) : (
+                <img 
+                  src={`http://localhost:4000${activePopup.imageUrl}`} 
+                  alt={activePopup.title}
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
